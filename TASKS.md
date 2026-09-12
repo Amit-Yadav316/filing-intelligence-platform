@@ -64,24 +64,24 @@ Commit after every green test. Tick boxes as you go so a fresh Claude Code sessi
 ## Day 2 — Parse, chunk, tag
 
 ### Block 2.1 FilingParser
-- [ ] HTML to clean text, strip nav, styling, page artefacts
-- [ ] `TableExtractor`: detect `<table>` elements, serialise to markdown, preserve as atomic units, never split mid-table
+- [x] HTML to clean text, strip nav, styling, page artefacts
+- [x] `TableExtractor`: detect `<table>` elements, serialise to markdown, preserve as atomic units, never split mid-table
 - [ ] Split exhibits from the main document body
-- [ ] Handle both modern inline-XBRL HTML and older plain HTML
-- [ ] **Gate**: 3 filings parsed, tables visually verified against the EDGAR rendering
+- [x] Handle both modern inline-XBRL HTML and older plain HTML
+- [x] **Gate**: 3 filings parsed (AAPL 10-K, MSFT 10-K, AAPL 10-Q). Apple's segment table verified against the EDGAR rendering: Total net sales $383,285M matches the XBRL fact exactly
 
 ### Block 2.2 StructuralChunker
-- [ ] Detect Item boundaries by regex on headings: `Item 1`, `Item 1A`, `Item 7`, `Item 7A`, `Item 8`, etc
-- [ ] Sub-chunk long items with a token window plus overlap, configurable
-- [ ] Tables become their own chunks, flagged `chunk_type="table"`
-- [ ] Every chunk carries `chunk_id`, `accession`, `cik`, `form`, `filed`, `item_number`, `item_title`, `char_start`, `char_end`, `chunk_type`, `token_count`
-- [ ] Test: chunk offsets round-trip, `text[char_start:char_end]` equals the chunk content
-- [ ] **Gate**: offsets provably correct on 3 filings, no chunk spans an Item boundary
+- [x] Detect Item boundaries by regex on headings: `Item 1`, `Item 1A`, `Item 7`, `Item 7A`, `Item 8`, etc
+- [x] Sub-chunk long items with a token window plus overlap, configurable
+- [x] Tables become their own chunks, flagged `chunk_type="table"`
+- [x] Every chunk carries `chunk_id`, `accession`, `cik`, `form`, `filed`, `item_number`, `item_title`, `char_start`, `char_end`, `chunk_type`, `token_count`
+- [x] Test: chunk offsets round-trip, `text[char_start:char_end]` equals the chunk content
+- [x] **Gate**: PASSED on 3 filings - every chunk round-trips its offsets, none spans an Item boundary, none exceeds the token budget
 
 ### Block 2.3 SectionTagger
-- [ ] Rule-based map from Item number to canonical section label
+- [x] Rule-based map from Item number to canonical section label
 - [ ] Fallback classifier only if the rules miss, do not over-engineer
-- [ ] **Day 2 gate**: `make parse ACCESSION=<x>` emits chunks with full metadata to JSON, spot-checked against the source filing
+- [x] **Day 2 gate**: `make parse ACCESSION=<x>` emits chunks with full metadata to `data/interim/chunks/<accession>.json` and verifies the invariants
 
 ---
 

@@ -23,5 +23,13 @@ ignore = [
 "tests/*" = ["ARG"]          # pytest fixtures are passed but not always referenced
 "dags/*" = ["ARG", "B008"]   # Airflow decorators shadow these patterns
 
+# RUF001 flags "ambiguous" Unicode - smart quotes, en dashes - which is a good
+# default for source code but wrong in exactly these files. Real EDGAR filings
+# are full of that typography, and handling it correctly is what this code and
+# these tests are for. Suppressing it here keeps the check meaningful elsewhere.
+"src/parse/table_extractor.py" = ["RUF001"]
+"src/chunk/structural_chunker.py" = ["RUF001"]
+"tests/test_parse.py" = ["ARG", "RUF001"]
+
 [lint.isort]
 known-first-party = ["src"]

@@ -4,7 +4,7 @@ PY := .venv/bin/python
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help venv install lint fmt type test test-all probe universe up down seed demo clean
+.PHONY: help venv install lint fmt type test test-all parse probe universe up down seed demo clean
 
 help:  ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -35,6 +35,9 @@ test-all:  ## Everything, including the live SEC smoke test
 
 universe:  ## Build config/universe.json from EDGAR company_tickers.json
 	$(PY) -m scripts.build_universe
+
+parse:  ## Parse + chunk an archived filing and verify invariants (ACCESSION=...)
+	$(PY) -m scripts.parse_filing --accession $(ACCESSION)
 
 probe:  ## Block 1.3: can XBRL ground truth actually be resolved?
 	$(PY) -m scripts.probe_xbrl_resolution

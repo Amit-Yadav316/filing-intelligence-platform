@@ -1,0 +1,80 @@
+# Local stack for the Filing Intelligence Platform.
+#
+# Day 1 brings up only what ingest needs: the object store that raw filings land
+# in, and the database that will later hold chunks and embeddings. Redis, Mongo,
+# Prometheus, Grafana and AlertManager arrive on the days that first use them,
+# so each day's gate is passed against a stack that actually exists.
+#
+# Credentials here are local development defaults and match the defaults in
+# src/config/settings.py. They are not secrets. A deployment injects real ones
+# through the environment; nothing reads a credential from this file in anger.
+#
+# Note on the MinIO image: `minio/minio` on Docker Hub is no longer publicly
+# pullable, so images come from quay.io, which is MinIO's own registry.
+
+name: filing-intel
+
+services:
+  minio:
+    # Pinned. `latest` on an object store is how a corpus becomes unreadable
+    # after an unrelated `docker compose pull`.
+    image: quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: filing-intel-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"   # S3 API - what boto3 talks to
+      - "9001:9001"   # web console, for eyeballing a landed partition
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  # Creates the bucket and exits. Without this, `make up` leaves you with a
+  # running object store and nowhere to put anything, which fails the
+  # "runs on clone" promise in the README.
+  minio-init:
+    image: quay.io/minio/mc:latest
+    container_name: filing-intel-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 minioadmin minioadmin &&
+      mc mb --ignore-existing local/filings &&
+      mc version enable local/filings &&
+      echo 'bucket filings ready, versioning enabled' "
+    restart: "no"
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: filing-intel-postgres
+    environment:
+      POSTGRES_USER: filing
+      POSTGRES_PASSWORD: filing
+      POSTGRES_DB: filings
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Runs once, on an empty data directory only.
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U filing -d filings"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  minio-data:
+  postgres-data:

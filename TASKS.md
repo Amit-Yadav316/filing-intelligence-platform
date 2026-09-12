@@ -47,13 +47,13 @@ Commit after every green test. Tick boxes as you go so a fresh Claude Code sessi
 - [x] **Gate**: PASSED. FY2022 100%, FY2023 100%, FY2024 98% on all four fields across 55 companies. `config/xbrl_tag_map.yaml` built up front; revenue needs 4 tags, the most common one alone resolves only 51%. See `docs/EVALUATION.md` and `docs/DATA_NOTES.md`
 
 ### Block 1.4 Archival
-- [ ] `ArchiveWriter`: writes raw HTML and XBRL JSON to MinIO at `cik={cik}/form={form}/filed={date}/accession={acc}/`
-- [ ] Idempotent: re-running a partition overwrites exactly that partition, nothing else
-- [ ] Writes a `_manifest.json` per partition with fetch timestamp, byte count, source URL, content hash
-- [ ] **Gate**: one filing landed, re-run produces identical state, manifest present
+- [x] `ArchiveWriter`: writes raw HTML and XBRL JSON to MinIO at `cik={cik}/form={form}/filed={date}/accession={acc}/`
+- [x] Idempotent: re-running a partition overwrites exactly that partition, nothing else
+- [x] Writes a `_manifest.json` per partition with fetch timestamp, byte count, source URL, content hash
+- [x] **Gate**: PASSED. Apple FY2023 10-K (1,558,924 bytes) landed to MinIO; re-run returns `unchanged` with zero writes and the original `fetched_at` preserved; hashes verified; manifest confirmed independently via `mc`
 
 ### Block 1.5 Ingest DAG
-- [ ] `docker-compose.yml` with MinIO and Postgres only at this point
+- [x] `docker-compose.yml` with MinIO and Postgres only at this point
 - [ ] Astro CLI project, `astro dev start` works
 - [ ] `ingest_edgar_filings` DAG: `@daily`, `catchup=True`, `start_date=2024-01-01`, tasks `discover` → `fetch` → `land` → `fetch_xbrl`
 - [ ] Outlets `Dataset("s3://filings/raw")`

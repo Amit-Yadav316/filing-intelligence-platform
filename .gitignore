@@ -1,7 +1,15 @@
 # Secrets
+# .env.example IS committed - it is the template. The negation below keeps a
+# broader .env* rule from swallowing it, which is the classic way a repo ends
+# up with no usable template.
 .env
+.env.local
+.env.*.local
+!.env.example
 *.pem
 *.key
+*.p12
+credentials.json
 
 # Python
 __pycache__/
@@ -37,6 +45,27 @@ airflow.db
 airflow.cfg
 webserver_config.py
 .astro/
+airflow-webserver.pid
+# Airflow standalone writes a generated admin password here. It is a real
+# credential, not a config file.
+standalone_admin_password.txt
+
+# Local infrastructure state
+# Bind-mounted volumes for the observability stack land here from day 6.
+deploy/**/data/
+docker-compose.override.yml
+*.log
+
+# Embedding and index artefacts, if ever dumped to disk rather than Postgres
+*.pkl
+*.npy
+*.faiss
+
+# Editors
+.vscode/
+.idea/
+.vs/
+*.swp
 
 # OS
 .DS_Store

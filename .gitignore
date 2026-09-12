@@ -1,0 +1,44 @@
+# Secrets
+.env
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Notebooks are not part of the deliverable
+notebooks/
+
+# Local model + data artefacts (data/sample/ is committed, see below)
+models/
+data/raw/
+data/interim/
+*.duckdb
+*.sqlite
+
+# Airflow local state
+logs/
+airflow.db
+airflow.cfg
+webserver_config.py
+.astro/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini

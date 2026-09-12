@@ -1,0 +1,27 @@
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # bugbear
+    "C4",   # comprehensions
+    "SIM",  # simplify
+    "ARG",  # unused arguments
+    "PTH",  # use pathlib
+    "RUF",
+]
+ignore = [
+    "E501",  # line length is enforced by the formatter, not the linter
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["ARG"]          # pytest fixtures are passed but not always referenced
+"dags/*" = ["ARG", "B008"]   # Airflow decorators shadow these patterns
+
+[lint.isort]
+known-first-party = ["src"]

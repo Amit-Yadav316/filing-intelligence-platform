@@ -1,0 +1,14 @@
+Description:           Daily Index of EDGAR Dissemination Feed
+Last Data Received:    Jan  2, 2024
+Comments:              webmaster@sec.gov
+Anonymous FTP:         ftp://ftp.sec.gov/edgar/
+
+CIK|Company Name|Form Type|Date Filed|File Name
+--------------------------------------------------------------------------------
+1000275|ROYAL BANK OF CANADA|424B2|20240102|edgar/data/1000275/0001140361-24-000195.txt
+1000275|ROYAL BANK OF CANADA|424B2|20240102|edgar/data/1000275/0001140361-24-000196.txt
+1288750|Timberline Resources Corp|10-K|20240102|edgar/data/1288750/0001654954-24-000069.txt
+1827855|Medicale Corp.|10-K|20240102|edgar/data/1827855/0001683168-24-000004.txt
+90168|SIFCO INDUSTRIES INC|10-K|20240102|edgar/data/90168/0000090168-23-000083.txt
+320193|Apple Inc.|10-Q|20240102|edgar/data/320193/0000320193-24-000005.txt
+789019|MICROSOFT CORP|8-K|20240102|edgar/data/789019/0000950170-24-000123.txt

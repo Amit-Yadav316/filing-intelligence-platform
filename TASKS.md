@@ -16,10 +16,10 @@ Commit after every green test. Tick boxes as you go so a fresh Claude Code sessi
 
 ## Day 0 — manual, before Claude Code (20 min)
 
-- [ ] `git init`, drop in `CLAUDE.md`, `README.md`, `TASKS.md`, first commit
-- [ ] Fetch `https://www.sec.gov/files/company_tickers.json`, pick 50 large-cap tickers across 8+ sectors, save CIK mapping to `config/universe.json`
-- [ ] Decide the EDGAR User-Agent string, format `Name email@domain` — EDGAR blocks requests without one
-- [ ] Get an LLM API key into `.env`, add `.env` to `.gitignore`
+- [x] `git init`, drop in `CLAUDE.md`, `README.md`, `TASKS.md`, first commit
+- [x] Fetch `https://www.sec.gov/files/company_tickers.json`, pick 50 large-cap tickers across 8+ sectors, save CIK mapping to `config/universe.json`
+- [x] Decide the EDGAR User-Agent string, format `Name email@domain` — EDGAR blocks requests without one
+- [x] Get an LLM API key into `.env`, add `.env` to `.gitignore`
 - [ ] **Spend 20 minutes on GitHub** searching `sec edgar airflow prometheus in:readme` and `10-K extraction SLO in:readme`, sorted by recently updated. Confirm the ops-layer gap is still real before committing the week
 
 ---
@@ -27,24 +27,24 @@ Commit after every green test. Tick boxes as you go so a fresh Claude Code sessi
 ## Day 1 — Ingest
 
 ### Block 1.1 Scaffold
-- [ ] `pyproject.toml` with pinned deps, `[project.optional-dependencies]` for `serve`, `dev`, `ml`
-- [ ] `src/config/settings.py` as pydantic `BaseSettings`: EDGAR base URLs, user agent, rate limit, MinIO creds, Postgres DSN, Mongo URI, Redis URL, model names, all thresholds
-- [ ] Package skeleton per the README layout, `__init__.py` everywhere
-- [ ] `ruff.toml`, `pytest.ini`, `.pre-commit-config.yaml`, `Makefile` with `up`, `seed`, `demo`, `test`, `lint`
-- [ ] **Gate**: `pytest` runs green on an empty suite, `python -c "from src.config.settings import Settings; Settings()"` resolves
+- [x] `pyproject.toml` with pinned deps, `[project.optional-dependencies]` for `serve`, `dev`, `ml`
+- [x] `src/config/settings.py` as pydantic `BaseSettings`: EDGAR base URLs, user agent, rate limit, MinIO creds, Postgres DSN, Mongo URI, Redis URL, model names, all thresholds
+- [x] Package skeleton per the README layout, `__init__.py` everywhere
+- [x] `ruff.toml`, `pytest.ini`, `.pre-commit-config.yaml`, `Makefile` with `up`, `seed`, `demo`, `test`, `lint`
+- [x] **Gate**: `pytest` runs green on an empty suite, `python -c "from src.config.settings import Settings; Settings()"` resolves
 
 ### Block 1.2 EdgarClient
-- [ ] `RateLimiter` class, token bucket, under 10 req/s, configurable
-- [ ] `EdgarClient` with User-Agent header, retry with exponential backoff, timeout, circuit breaker after N consecutive failures
-- [ ] Methods: `get_daily_index(date)`, `fetch_filing_document(cik, accession, filename)`, `get_company_facts(cik)`, `get_submissions(cik)`
-- [ ] Tests against recorded fixtures in `tests/fixtures/`, not the live API
-- [ ] **Gate**: 3 filings fetched by hand, rate limiter provably caps request rate under load test
+- [x] `RateLimiter` class, token bucket, under 10 req/s, configurable
+- [x] `EdgarClient` with User-Agent header, retry with exponential backoff, timeout, circuit breaker after N consecutive failures
+- [x] Methods: `get_daily_index(date)`, `fetch_filing_document(cik, accession, filename)`, `get_company_facts(cik)`, `get_submissions(cik)`
+- [x] Tests against recorded fixtures in `tests/fixtures/`, not the live API
+- [x] **Gate**: rate limiter provably caps request rate (deterministic fake-clock test plus a real-time threaded test). Live fetch verified against companyfacts, daily index and company_tickers
 
 ### Block 1.3 The resolution probe — DO THIS BEFORE ANYTHING ELSE DOWNSTREAM
-- [ ] `scripts/probe_xbrl_resolution.py`: for all 50 CIKs, pull `companyfacts`, attempt to resolve FY2023 `total_revenue`, `net_income`, `total_assets`, `operating_cash_flow`
-- [ ] Try tag variants per field: `Revenues`, `RevenueFromContractWithCustomerExcludingAssessedTax`, `SalesRevenueNet`, and equivalents for the others
-- [ ] Output a table: field, resolved count, unresolved count, which tag matched, which CIKs failed
-- [ ] **Gate**: resolution rate per field is printed. **If below 70 percent, stop and build `config/xbrl_tag_map.yaml` before continuing.** This number determines whether the whole evaluation premise works
+- [x] `scripts/probe_xbrl_resolution.py`: for all 50 CIKs, pull `companyfacts`, attempt to resolve FY2023 `total_revenue`, `net_income`, `total_assets`, `operating_cash_flow`
+- [x] Try tag variants per field: `Revenues`, `RevenueFromContractWithCustomerExcludingAssessedTax`, `SalesRevenueNet`, and equivalents for the others
+- [x] Output a table: field, resolved count, unresolved count, which tag matched, which CIKs failed
+- [x] **Gate**: PASSED. FY2022 100%, FY2023 100%, FY2024 98% on all four fields across 55 companies. `config/xbrl_tag_map.yaml` built up front; revenue needs 4 tags, the most common one alone resolves only 51%. See `docs/EVALUATION.md` and `docs/DATA_NOTES.md`
 
 ### Block 1.4 Archival
 - [ ] `ArchiveWriter`: writes raw HTML and XBRL JSON to MinIO at `cik={cik}/form={form}/filed={date}/accession={acc}/`

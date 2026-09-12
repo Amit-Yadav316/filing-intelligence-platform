@@ -59,6 +59,12 @@ def configure_logging(level: str = "INFO", *, json_output: bool = True) -> None:
     """Idempotent. Safe to call from an Airflow task and from the API process."""
     logging.basicConfig(format="%(message)s", level=getattr(logging, level.upper(), logging.INFO))
 
+    # httpx logs a line per request at INFO. Across a 55-company backfill that
+    # buries our own structured events under thousands of transport lines, and
+    # the same information is already carried by the EDGAR_REQUESTS counter.
+    for noisy in ("httpx", "httpcore", "urllib3", "botocore", "s3transfer"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+
     renderer: Any = (
         structlog.processors.JSONRenderer()
         if json_output

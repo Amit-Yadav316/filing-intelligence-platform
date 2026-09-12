@@ -1,0 +1,58 @@
+# XBRL tag map: how a business concept becomes an answer key.
+#
+# The same economic fact carries different us-gaap tags depending on the filer,
+# the industry and the year. "Revenue" is the worst offender: a product company
+# tags RevenueFromContractWithCustomerExcludingAssessedTax, an older filing uses
+# SalesRevenueNet, an integrated oil company uses a total-revenues-and-other-
+# income concept, and a bank reports RevenuesNetOfInterestExpense because gross
+# revenue is not a meaningful line for it.
+#
+# Tags are tried in the order listed and the FIRST match wins, so order encodes
+# preference, not just membership. The probe reports which tag actually matched
+# per company, which is how this list was built and how it should be extended.
+#
+# period:
+#   duration - the fact covers a span (revenue, earnings, cash flow). Only spans
+#              of roughly a year are accepted for an annual figure.
+#   instant  - the fact is a balance at a point in time (assets). No start date.
+
+annual_duration_days:
+  min: 340
+  max: 400
+
+fields:
+  total_revenue:
+    period: duration
+    units: [USD]
+    tags:
+      - RevenueFromContractWithCustomerExcludingAssessedTax
+      - Revenues
+      - RevenueFromContractWithCustomerIncludingAssessedTax
+      - SalesRevenueNet
+      - SalesRevenueGoodsNet
+      - RevenuesNetOfInterestExpense          # banks and brokers
+      - TotalRevenuesAndOtherIncome           # integrated energy
+      - RevenueFromContractWithCustomerExcludingAssessedTaxMember
+
+  net_income:
+    period: duration
+    units: [USD]
+    tags:
+      - NetIncomeLoss
+      - ProfitLoss
+      - NetIncomeLossAvailableToCommonStockholdersBasic
+      - IncomeLossFromContinuingOperations
+
+  total_assets:
+    period: instant
+    units: [USD]
+    tags:
+      - Assets
+      - AssetsNet
+
+  operating_cash_flow:
+    period: duration
+    units: [USD]
+    tags:
+      - NetCashProvidedByUsedInOperatingActivities
+      - NetCashProvidedByUsedInOperatingActivitiesContinuingOperations

@@ -4,7 +4,7 @@ PY := .venv/bin/python
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help venv install lint fmt type test test-all parse probe universe up down seed demo clean
+.PHONY: help venv install lint fmt type test test-all parse index ablation probe universe up down seed demo clean
 
 help:  ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -38,6 +38,12 @@ universe:  ## Build config/universe.json from EDGAR company_tickers.json
 
 parse:  ## Parse + chunk an archived filing and verify invariants (ACCESSION=...)
 	$(PY) -m scripts.parse_filing --accession $(ACCESSION)
+
+index:  ## Parse, chunk, embed and index every landed filing
+	$(PY) -m scripts.index_corpus
+
+ablation:  ## Measure BM25 vs dense vs hybrid on the labelled query set
+	$(PY) -m scripts.run_ablation
 
 probe:  ## Block 1.3: can XBRL ground truth actually be resolved?
 	$(PY) -m scripts.probe_xbrl_resolution

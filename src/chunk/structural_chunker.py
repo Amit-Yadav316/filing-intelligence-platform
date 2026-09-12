@@ -36,6 +36,7 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import date
+from itertools import pairwise
 from typing import Literal
 
 from src.chunk.section_tagger import Section, SectionTagger
@@ -325,6 +326,32 @@ class StructuralChunker:
             i = back
         return windows
 
+    @staticmethod
+    def _split_on_regions(
+        start: int, end: int, regions: list[ItemRegion]
+    ) -> list[tuple[int, int, ItemRegion | None]]:
+        """Cut [start, end) at every Item boundary it crosses.
+
+        Returns contiguous segments covering the whole span, each tagged with
+        the region it falls in - or None for text before the first Item, which
+        is the cover page and table of contents.
+        """
+        points = {start, end}
+        for r in regions:
+            if start < r.char_start < end:
+                points.add(r.char_start)
+            if start < r.char_end < end:
+                points.add(r.char_end)
+        ordered = sorted(points)
+
+        segments: list[tuple[int, int, ItemRegion | None]] = []
+        for a, b in pairwise(ordered):
+            if b <= a:
+                continue
+            here = next((r for r in regions if r.char_start <= a < r.char_end), None)
+            segments.append((a, b, here))
+        return segments
+
     # --- assembly ---------------------------------------------------------
     def chunk(
         self,
@@ -388,33 +415,33 @@ class StructuralChunker:
             )
 
         for block in parsed.blocks:
-            region = region_for(block.char_start)
             if block.kind == "table":
-                # Never split: a financial statement cut in half is worse than
-                # one oversized chunk.
-                add(block.char_start, block.char_end, "table", region, block.table_index)
+                # Atomic: a financial statement cut in half is worse than one
+                # oversized chunk. Attributed to the region it starts in.
+                add(
+                    block.char_start,
+                    block.char_end,
+                    "table",
+                    region_for(block.char_start),
+                    block.table_index,
+                )
                 continue
 
-            # Clip the block to its region so no window crosses an Item boundary.
-            start = block.char_start
-            end = block.char_end
-            if region is not None:
-                end = min(end, region.char_end)
-            if end <= start:
-                continue
-
-            for w_start, w_end in self._window(parsed, start, end):
-                add(w_start, w_end, "prose", region)
-
-            # A block straddling a boundary continues in the next region.
-            while region is not None and end < block.char_end:
-                nxt = region_for(end)
-                start, end = end, min(block.char_end, nxt.char_end if nxt else block.char_end)
-                if end <= start:
-                    break
-                for w_start, w_end in self._window(parsed, start, end):
-                    add(w_start, w_end, "prose", nxt)
-                region = nxt
+            # A prose block frequently spans several Items - the parser emits
+            # blocks on markup structure, which has nothing to do with where
+            # Item headings fall. Taking the region at the block's start and
+            # applying it to the whole block was wrong: it labelled everything
+            # from the cover page through Item 4 as "no item", losing seven
+            # sections of Apple's 10-K to a single oversized block.
+            #
+            # So the block is cut at every region boundary it crosses, and each
+            # piece is windowed within its own region. That is also what makes
+            # "no chunk spans an Item boundary" true by construction.
+            for seg_start, seg_end, seg_region in self._split_on_regions(
+                block.char_start, block.char_end, regions
+            ):
+                for w_start, w_end in self._window(parsed, seg_start, seg_end):
+                    add(w_start, w_end, "prose", seg_region)
 
         stats.chunks = len(chunks)
         stats.table_chunks = sum(1 for c in chunks if c.chunk_type == "table")

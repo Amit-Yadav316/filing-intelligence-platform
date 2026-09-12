@@ -200,6 +200,23 @@ class ChunkStore:
             cur.execute("DELETE FROM chunks WHERE accession = %s", (accession,))
             return int(cur.rowcount)
 
+    def prune_filing(self, accession: str, keep_chunk_ids: Sequence[str]) -> int:
+        """Delete chunks for a filing that the current chunker no longer emits.
+
+        Without this, changing the chunker leaves the previous run's chunks
+        behind under their old ids. They keep their embeddings, stay
+        retrievable, and quietly compete with the correct chunks - a stale
+        result that nothing reports as stale.
+        """
+        if not keep_chunk_ids:
+            return 0
+        with self.connect().cursor() as cur:
+            cur.execute(
+                "DELETE FROM chunks WHERE accession = %s AND NOT (chunk_id = ANY(%s))",
+                (accession, list(keep_chunk_ids)),
+            )
+            return int(cur.rowcount)
+
     # --- reads ------------------------------------------------------------
     def stats(self) -> StoreStats:
         row = (

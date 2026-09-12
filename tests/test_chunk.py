@@ -158,6 +158,38 @@ def test_a_run_on_paragraph_still_gets_split(settings_small: Settings) -> None:
     assert max(c.token_count for c in chunks) <= settings_small.chunk_token_window * 1.5
 
 
+def test_one_block_spanning_several_items_is_attributed_to_each(
+    chunker: StructuralChunker,
+) -> None:
+    """Regression. The parser splits blocks on markup, not on Item headings, so
+    a filing with no tables is ONE prose block containing every Item. Taking the
+    region at the block's start and applying it to the whole block labelled
+    everything from the cover page through Item 4 as "no item" - seven sections
+    of Apple's 10-K vanished into 69 orphaned chunks.
+    """
+    raw = build_filing(ITEMS, toc=False)
+    chunks, _, parsed = run(chunker, raw)
+
+    assert len(parsed.prose_blocks) == 1, "fixture must produce a single block"
+
+    attributed = {c.item_number for c in chunks if c.item_number}
+    assert attributed == set(ITEMS), f"items lost during attribution: {set(ITEMS) - attributed}"
+
+
+def test_only_pre_item_text_is_left_unattributed(chunker: StructuralChunker) -> None:
+    """Chunks before the first Item heading are the cover page, and those are
+    legitimately item-less. Anything after it must belong to a section."""
+    chunks, _, parsed = run(chunker, build_filing(ITEMS, toc=False))
+    first_item_start = min(r.char_start for r in chunker.find_item_regions(parsed))
+
+    orphans_after_first_item = [
+        c for c in chunks if c.item_number is None and c.char_start >= first_item_start
+    ]
+    assert not orphans_after_first_item, (
+        f"{len(orphans_after_first_item)} chunks inside a section carry no item number"
+    )
+
+
 # --- tables ---------------------------------------------------------------
 def test_a_table_becomes_one_chunk_and_is_never_split(
     chunker: StructuralChunker,

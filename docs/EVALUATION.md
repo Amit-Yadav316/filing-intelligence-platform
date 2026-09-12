@@ -40,3 +40,33 @@ This is the precondition for every accuracy number in this project: a field that
 | `net_income`          | 54/55      | 98%    |          1 | `NetIncomeLoss` x53, `ProfitLoss` x1                                                                                                                                   | BLK      |
 | `total_assets`        | 55/55      | 100%   |          3 | `Assets` x55                                                                                                                                                           | -        |
 | `operating_cash_flow` | 54/55      | 98%    |          1 | `NetCashProvidedByUsedInOperatingActivities` x54                                                                                                                       | BLK      |
+
+## Retrieval ablation
+
+_Generated 2026-09-12T18:33:37+00:00 over 8,280 chunks from 26 filings, against 38 hand-labelled queries._
+
+A retrieved chunk counts as relevant if it comes from the expected company's filing **and** falls in the expected Item. Labelling at section level rather than chunk level is deliberate: chunk ids change whenever the chunker changes, so chunk-level labels would need redoing on every tuning run.
+
+RRF constant k=60, candidate depth 50 per arm before fusion.
+
+**Precision@10 is structurally capped at 0.905**, not 1.0. 5 of the 38 queries target an Item holding fewer than ten chunks - Controls and Procedures runs to a handful - so no retriever can fill ten slots with relevant results. Read the precision figures against that ceiling rather than against a perfect score.
+
+### Without metadata filtering
+
+Raw retrieval quality over the whole corpus - the hard case, where a query about supply chain risk competes against every company that discusses it.
+
+| Method | Precision@10 | Recall@10 | MRR | p50 | p95 |
+|---|---|---|---|---|---|
+| BM25 (Postgres FTS) | 0.113 | 0.447 | 0.330 | 6 ms | 48 ms |
+| **Dense (pgvector)** | 0.210 | 0.632 | 0.415 | 65 ms | 88 ms |
+| Hybrid RRF | 0.182 | 0.605 | 0.386 | 76 ms | 103 ms |
+
+### With company and form pre-filtering
+
+What the API actually does when the caller names a company. The candidate set is narrowed before ranking, not after, so the top-k budget is not spent on documents the user already excluded.
+
+| Method | Precision@10 | Recall@10 | MRR | p50 | p95 |
+|---|---|---|---|---|---|
+| BM25 (Postgres FTS) | 0.208 | 0.553 | 0.539 | 3 ms | 5 ms |
+| Dense (pgvector) | 0.718 | 1.000 | 0.961 | 70 ms | 85 ms |
+| **Hybrid RRF** | 0.729 | 1.000 | 0.926 | 74 ms | 89 ms |

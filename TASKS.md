@@ -88,27 +88,27 @@ Commit after every green test. Tick boxes as you go so a fresh Claude Code sessi
 ## Day 3 — Embed, index, retrieve
 
 ### Block 3.1 EmbeddingService
-- [ ] sentence-transformers `bge-small-en-v1.5`, batched
-- [ ] `CacheKeyBuilder`: SHA256 of chunk text plus model name, Redis lookup before embedding
-- [ ] **Gate**: re-running the same corpus embeds zero chunks, cache hit rate logged
+- [x] sentence-transformers `bge-small-en-v1.5`, batched
+- [x] `CacheKeyBuilder`: SHA256 of chunk text plus model name, Redis lookup before embedding
+- [x] **Gate**: PASSED. Second pass embedded 0 of 8,280 chunks, 61.8s vs 3,301s (53x). After a full reset plus a chunker change that altered every chunk id, Redis still served 98.9% - the payoff for keying the cache on content rather than id
 
 ### Block 3.2 Indexes
-- [ ] Postgres schema: `chunks` table with metadata columns, `tsvector` column for BM25, `vector(384)` column for pgvector
-- [ ] `BM25Index` using Postgres FTS with `ts_rank_cd`
-- [ ] `VectorIndex` using pgvector with an HNSW index
-- [ ] `MetadataFilter`: pre-filter by cik, form, fiscal_year, section before ranking
-- [ ] **Gate**: both indexes return sane results for 5 manual queries
+- [x] Postgres schema: `chunks` table with metadata columns, `tsvector` column for BM25, `vector(384)` column for pgvector
+- [x] `BM25Index` using Postgres FTS with `ts_rank_cd`
+- [x] `VectorIndex` using pgvector with an HNSW index
+- [x] `MetadataFilter`: pre-filter by cik, form, fiscal_year, section before ranking
+- [x] **Gate**: 5 manual queries verified - disclosure-controls hits land on Item 9A across three companies, and a filtered segment query surfaces the serialised table first
 
 ### Block 3.3 HybridRetriever
-- [ ] **Port RRF fusion and BM25 logic from the financial-intelligence-agent repo**, copy the files by hand, do not fork the repo
-- [ ] Strip the TF-IDF plus random-projection path and the SQLite engine entirely
-- [ ] RRF with k=60, configurable
-- [ ] **Gate**: hybrid returns results, latency logged
+- [x] RRF fusion and lexical ranking written fresh - the `financial-intelligence-agent` repo was not available to this session, so nothing was ported. RRF is ~20 lines and is unit-tested against its definition
+- [x] N/A - nothing was ported, so there was no TF-IDF or SQLite path to strip
+- [x] RRF with k=60, configurable
+- [x] **Gate**: hybrid returns fused results with provenance; p95 89 ms filtered, well inside the 800 ms SLO
 
 ### Block 3.4 Labelled query set
-- [ ] Hand-write 30 to 50 questions with known source sections, save to `tests/fixtures/query_set.json`
-- [ ] `AblationRunner`: BM25 only vs dense only vs hybrid, reporting precision@10, MRR, p95 latency
-- [ ] **Day 3 gate**: ablation table populated in `docs/EVALUATION.md`, reported honestly even if hybrid loses
+- [x] Hand-write 30 to 50 questions with known source sections, save to `tests/fixtures/query_set.json`
+- [x] `AblationRunner`: BM25 only vs dense only vs hybrid, reporting precision@10, MRR, p95 latency
+- [x] **Day 3 gate**: ablation populated in `docs/EVALUATION.md` and `README.md`. Reported honestly: hybrid does NOT clearly win - it edges dense by 0.011 on filtered precision, loses on MRR, and loses outright unfiltered. Pre-filtering is the real lever (3.4x)
 
 ---
 

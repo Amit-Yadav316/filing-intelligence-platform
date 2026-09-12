@@ -33,7 +33,29 @@ QUERY_SET = Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "query_
 MARKER = "## Retrieval ablation"
 
 
-def render(unfiltered: dict, filtered: dict, store_stats, query_count: int) -> str:
+def relevance_ceiling(store, queries) -> tuple[float, int]:
+    """Highest precision@10 the labelling can award.
+
+    Some Items are genuinely short - Controls and Procedures runs to a few
+    chunks - so fewer than 10 relevant chunks exist and precision@10 is
+    capped below 1.0 no matter how good retrieval is. Reporting the numbers
+    without this makes every arm look worse than it is.
+    """
+    conn = store.connect()
+    caps = []
+    for q in queries:
+        n = conn.execute(
+            "SELECT count(*) FROM chunks WHERE cik=%s AND upper(form)=upper(%s) "
+            "AND upper(item_number)=ANY(%s)",
+            (q.cik.zfill(10), q.form, [i.upper() for i in q.items]),
+        ).fetchone()[0]
+        caps.append(min(n, 10) / 10)
+    return (sum(caps) / len(caps) if caps else 0.0), sum(1 for c in caps if c < 1.0)
+
+
+def render(
+    unfiltered: dict, filtered: dict, store_stats, query_count: int, ceiling=(1.0, 0)
+) -> str:
     out = [
         MARKER,
         "",
@@ -48,6 +70,12 @@ def render(unfiltered: dict, filtered: dict, store_stats, query_count: int) -> s
         "",
         f"RRF constant k={unfiltered['rrf_k']}, candidate depth "
         f"{unfiltered['candidate_k']} per arm before fusion.",
+        "",
+        f"**Precision@10 is structurally capped at {ceiling[0]:.3f}**, not 1.0. "
+        f"{ceiling[1]} of the {query_count} queries target an Item holding fewer than "
+        "ten chunks - Controls and Procedures runs to a handful - so no retriever can "
+        "fill ten slots with relevant results. Read the precision figures against that "
+        "ceiling rather than against a perfect score.",
         "",
         "### Without metadata filtering",
         "",
@@ -111,12 +139,14 @@ def main() -> int:
         hybrid = HybridRetriever(bm25, vector, embedder, settings)
         runner = AblationRunner(bm25, vector, hybrid, embedder, settings)
 
+        ceiling = relevance_ceiling(store, queries)
+        print(f"Structural precision@10 ceiling: {ceiling[0]:.3f}")
         print("Running unfiltered ablation...")
         unfiltered = runner.run(queries, k=args.k, filtered=False)
         print("Running filtered ablation...")
         filtered = runner.run(queries, k=args.k, filtered=True)
 
-    section = render(unfiltered, filtered, stats, len(queries))
+    section = render(unfiltered, filtered, stats, len(queries), ceiling)
     print("\n" + section)
 
     if not args.no_write:

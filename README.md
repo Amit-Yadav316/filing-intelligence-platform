@@ -144,24 +144,54 @@ Alerts fire on error-budget burn over a rolling window, not on instantaneous thr
 
 ## Retrieval
 
-Hybrid search over `TBD` chunks from `TBD` filings across `TBD` companies.
+Hybrid search over **8,280 chunks** from **26 filings** across **12 companies** (10-K and
+10-Q, 2022-2024).
 
-- **BM25** via Postgres full-text search
-- **Dense** via pgvector, `bge-small-en-v1.5`
-- **Fusion** via Reciprocal Rank Fusion, k=60
-- **Metadata pre-filtering** by company, form, fiscal year and section before ranking
+- **BM25** via Postgres full-text search - see the honesty note below
+- **Dense** via pgvector with HNSW, `bge-small-en-v1.5`, cosine distance
+- **Fusion** via Reciprocal Rank Fusion, k=60, 50 candidates per arm
+- **Metadata pre-filtering** by company, form, fiscal year and section *before* ranking
 
-Ablation on a hand-labelled query set of `TBD` questions:
+Measured on a hand-labelled set of **38 questions** with known source sections
+(`tests/fixtures/query_set.json`). Precision@10 is structurally capped at **0.905**,
+because 5 queries target an Item holding fewer than ten chunks.
 
-| Method | Precision@10 | MRR | p95 latency |
-|---|---|---|---|
-| BM25 only | | | |
-| Dense only | | | |
-| Hybrid RRF | | | |
+**With company and form pre-filtering** - what the API does when a caller names a company:
 
-Report the result even if hybrid does not win. It often does not on keyword-heavy financial queries.
+| Method | Precision@10 | Recall@10 | MRR | p95 |
+|---|---|---|---|---|
+| BM25 (Postgres FTS) | 0.208 | 0.553 | 0.539 | 5 ms |
+| Dense (pgvector) | 0.718 | **1.000** | **0.961** | 85 ms |
+| **Hybrid RRF** | **0.729** | **1.000** | 0.926 | 89 ms |
 
----
+**Without filtering**, over the whole corpus:
+
+| Method | Precision@10 | Recall@10 | MRR | p95 |
+|---|---|---|---|---|
+| BM25 (Postgres FTS) | 0.113 | 0.447 | 0.330 | 48 ms |
+| **Dense (pgvector)** | **0.210** | **0.632** | **0.415** | 88 ms |
+| Hybrid RRF | 0.182 | 0.605 | 0.386 | 103 ms |
+
+### What the numbers actually say
+
+**Hybrid RRF does not clearly win, and this README does not pretend otherwise.**
+Filtered, it edges dense on precision by 0.011 and *loses* on MRR by 0.035.
+Unfiltered, dense beats it outright on every metric. RRF weights both arms
+equally, so fusing a strong dense arm with a weak lexical one pulls the result
+toward the weaker of the two.
+
+**The biggest lever is pre-filtering, not fusion.** Constraining the candidate
+set by company and form moves dense precision@10 from 0.210 to 0.718 - a 3.4x
+gain, far larger than anything fusion contributes. That is an architecture
+finding: spend the effort on metadata, not on tuning a fusion constant.
+
+**On the BM25 label.** The lexical arm ranks with Postgres `ts_rank_cd`, which
+is cover-density ranking, **not Okapi BM25**. It shares term-frequency
+saturation and proximity weighting, but implements neither BM25's document
+length normalisation nor its IDF formulation. True BM25 in Postgres needs an
+extension that cannot be assumed on a stock image. The name is kept because it
+names the retrieval *arm*; the ranker is stated accurately here and in the code,
+and its weakness shows up honestly in the table above.
 
 ## Stack
 

@@ -83,6 +83,7 @@ def main() -> int:
     print(f"    cache hits        : {cache.hits}")
     print(f"    cache misses      : {cache.misses}")
     print(f"    in-batch repeats  : {cache.duplicates}")
+    print(f"    stale rows pruned : {sum(r.pruned for r in results)}")
     print(f"    cache hit rate    : {cache.hit_rate:.1%}")
 
     if failed:

@@ -44,6 +44,7 @@ class IndexingResult:
     embedded: int = 0
     skipped_unchanged: int = 0
     written: int = 0
+    pruned: int = 0
     error: str | None = None
     items: list[str] = field(default_factory=list)
 
@@ -155,6 +156,8 @@ class IndexingPipeline:
                 content_hashes=pending_hashes,
             )
 
+        result.pruned = self.store.prune_filing(accession, [c.chunk_id for c in chunks])
+
         log.info(
             "filing_indexed",
             accession=accession,
@@ -162,6 +165,7 @@ class IndexingPipeline:
             chunks=result.chunks,
             embedded=result.embedded,
             skipped=result.skipped_unchanged,
+            pruned=result.pruned,
         )
         return result
 

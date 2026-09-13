@@ -14,6 +14,7 @@ a single ``grep``.
 from __future__ import annotations
 
 import time
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from typing import Any
 
@@ -36,7 +37,7 @@ _state: dict[str, Any] = {}
 
 
 @asynccontextmanager
-async def lifespan(_app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Load the model and open connections once, not per request.
 
     The embedding model takes seconds to load. Doing that inside a request
@@ -57,9 +58,17 @@ async def lifespan(_app: FastAPI):
             BM25Index(store, settings), VectorIndex(store, settings), embedder, settings
         ),
     )
-    # Warm the model so the first real request is not the one that pays.
-    embedder.embed_query("warmup")
-    log.info("api_ready", model=settings.embedding_model)
+    # The embedding model is loaded lazily, on the first request that needs it,
+    # rather than eagerly here. Warming it in the lifespan handler is the
+    # obvious choice and it cost an afternoon: loading torch inside the ASGI
+    # startup hook hung indefinitely on Windows, with the server stuck at
+    # "Waiting for application startup" and no error to read. A slower first
+    # request is a far better trade than a process that never becomes ready.
+    #
+    # The p95 latency SLO is measured over steady state, and the /health probe
+    # deliberately does not touch the model, so an orchestrator can route to
+    # this process immediately.
+    log.info("api_ready", model=settings.embedding_model, warmup="lazy")
     try:
         yield
     finally:
@@ -79,7 +88,9 @@ app = FastAPI(
 
 
 @app.middleware("http")
-async def correlate(request: Request, call_next):
+async def correlate(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     cid = set_correlation_id(request.headers.get("X-Correlation-Id"))
     started = time.perf_counter()
     response = await call_next(request)

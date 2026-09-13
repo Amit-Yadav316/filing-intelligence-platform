@@ -1,0 +1,44 @@
+# Routing is split by severity, because an alert that cannot be acted on at 3am
+# should not arrive at 3am. `page` is for a user-visible SLO breach; `ticket` is
+# for a budget trending the wrong way, which is a working-hours problem.
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: default
+  group_by: [alertname, slo]
+  # Group first alerts briefly so a cascade arrives as one notification rather
+  # than fifteen.
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - matchers: [severity="page"]
+      receiver: pager
+      group_wait: 10s
+      repeat_interval: 1h
+    - matchers: [severity="ticket"]
+      receiver: tickets
+      repeat_interval: 24h
+
+receivers:
+  # Webhook receivers are placeholders: this is a local stack with no paging
+  # provider wired up. The routing tree is the part worth reviewing.
+  - name: default
+    webhook_configs:
+      - url: http://localhost:5001/alerts
+        send_resolved: true
+  - name: pager
+    webhook_configs:
+      - url: http://localhost:5001/page
+        send_resolved: true
+  - name: tickets
+    webhook_configs:
+      - url: http://localhost:5001/ticket
+        send_resolved: true
+
+inhibit_rules:
+  # If the whole index is stale, the accuracy alert is a downstream symptom.
+  - source_matchers: [alertname="IndexStale"]
+    target_matchers: [slo="extraction_accuracy"]
+    equal: [platform]

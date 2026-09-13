@@ -47,9 +47,7 @@ class ScorecardStore:
         if self._client is None:
             from pymongo import MongoClient
 
-            self._client = MongoClient(
-                self.settings.mongo_uri, serverSelectionTimeoutMS=5000
-            )
+            self._client = MongoClient(self.settings.mongo_uri, serverSelectionTimeoutMS=5000)
         return self._client
 
     @property
@@ -123,17 +121,11 @@ class ScorecardStore:
 
     # --- reads ------------------------------------------------------------
     def get(self, accession: str) -> dict[str, Any] | None:
-        return self.db[SCORECARDS].find_one(
-            {"accession": accession}, sort=[("evaluated_at", -1)]
-        )
+        found = self.db[SCORECARDS].find_one({"accession": accession}, sort=[("evaluated_at", -1)])
+        return dict(found) if found is not None else None
 
     def latest(self, limit: int = 50) -> list[dict[str, Any]]:
-        return list(
-            self.db[SCORECARDS]
-            .find({}, {"_id": 0})
-            .sort("evaluated_at", -1)
-            .limit(limit)
-        )
+        return list(self.db[SCORECARDS].find({}, {"_id": 0}).sort("evaluated_at", -1).limit(limit))
 
     def accuracy_by_field(self) -> dict[str, float]:
         """Per-field accuracy across everything stored.

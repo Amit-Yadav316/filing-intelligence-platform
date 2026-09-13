@@ -1,0 +1,228 @@
+{
+  "uid": "filing-intel",
+  "title": "Filing Intelligence Platform",
+  "tags": ["slo", "filings"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Service level objectives",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 }
+    },
+    {
+      "type": "stat",
+      "title": "Extraction accuracy - total_revenue (SLO >= 90%)",
+      "description": "The quality gate blocks publication below the floor, so a red panel means extractions are being withheld, not that bad data is being written.",
+      "gridPos": { "h": 6, "w": 8, "x": 0, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 0.75 },
+              { "color": "green", "value": 0.9 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "filing_intel_extraction_accuracy_ratio{field=\"total_revenue\"}",
+          "legendFormat": "total_revenue"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Index freshness (SLO < 24h)",
+      "gridPos": { "h": 6, "w": 8, "x": 8, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 72000 },
+              { "color": "red", "value": 86400 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "filing_intel_index_freshness_seconds" }]
+    },
+    {
+      "type": "stat",
+      "title": "/search p95 (SLO < 800ms)",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 1 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 0.5 },
+              { "color": "red", "value": 0.8 }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(filing_intel_retrieval_latency_seconds_bucket{mode=\"api\"}[5m])))",
+          "legendFormat": "p95"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Extraction quality",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 7 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Accuracy by field",
+      "description": "Per-field, because a blended number hides which field is failing.",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "targets": [
+        {
+          "expr": "filing_intel_extraction_accuracy_ratio",
+          "legendFormat": "{{field}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Ground truth resolution rate by field",
+      "description": "The precondition for scoring anything. A drop here means the XBRL tag map has stopped matching how filers tag, not that the model got worse.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "targets": [
+        {
+          "expr": "filing_intel_ground_truth_resolution_ratio",
+          "legendFormat": "{{field}}"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Retrieval and pipeline",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 16 }
+    },
+    {
+      "type": "timeseries",
+      "title": "Retrieval latency percentiles by mode",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 17 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum by (le, mode) (rate(filing_intel_retrieval_latency_seconds_bucket[5m])))",
+          "legendFormat": "p50 {{mode}}"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, mode) (rate(filing_intel_retrieval_latency_seconds_bucket[5m])))",
+          "legendFormat": "p95 {{mode}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Embedding cache hit rate",
+      "description": "Steady state is above 95%. A collapse means Redis is gone or the model changed - the latter invalidates the whole index.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 17 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0, "max": 1 } },
+      "targets": [
+        {
+          "expr": "sum(rate(filing_intel_embedding_cache_total{outcome=\"hit\"}[10m])) / clamp_min(sum(rate(filing_intel_embedding_cache_total[10m])), 1)",
+          "legendFormat": "hit rate"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Stage latency p95",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 25 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, stage) (rate(filing_intel_extraction_latency_seconds_bucket[10m])))",
+          "legendFormat": "{{stage}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "LLM cost and tokens",
+      "description": "Counted from provider usage metadata, not estimated.",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 25 },
+      "targets": [
+        {
+          "expr": "increase(filing_intel_llm_cost_usd_total[1h])",
+          "legendFormat": "USD/hour {{model}}"
+        },
+        {
+          "expr": "sum by (direction) (increase(filing_intel_llm_tokens_total[1h]))",
+          "legendFormat": "{{direction}} tokens/hour"
+        }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Ingest health",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 33 }
+    },
+    {
+      "type": "stat",
+      "title": "EDGAR circuit breaker",
+      "description": "0 closed, 1 half-open, 2 open. Open means no requests are leaving the process.",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 34 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "type": "value",
+              "options": {
+                "0": { "text": "CLOSED", "color": "green" },
+                "1": { "text": "HALF-OPEN", "color": "orange" },
+                "2": { "text": "OPEN", "color": "red" }
+              }
+            }
+          ]
+        }
+      },
+      "targets": [{ "expr": "filing_intel_edgar_circuit_state" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "EDGAR requests by status",
+      "gridPos": { "h": 6, "w": 10, "x": 6, "y": 34 },
+      "targets": [
+        {
+          "expr": "sum by (status) (rate(filing_intel_edgar_requests_total[5m]))",
+          "legendFormat": "{{status}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Pipeline task failures",
+      "gridPos": { "h": 6, "w": 8, "x": 16, "y": 34 },
+      "targets": [
+        {
+          "expr": "sum by (dag, task) (increase(filing_intel_pipeline_task_failures_total[1h]))",
+          "legendFormat": "{{dag}}.{{task}}"
+        }
+      ]
+    }
+  ]
+}

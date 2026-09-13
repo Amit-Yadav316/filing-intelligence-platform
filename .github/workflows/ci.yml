@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  # EDGAR requires a contact address; CI never calls the live API (network
+  # tests are deselected) but Settings validates this at construction, so the
+  # value must be present and must not look like the placeholder.
+  EDGAR_USER_AGENT: "Filing Intelligence CI ci@filing-intelligence.invalid"
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          # CPU-only torch: the CUDA build is ~2GB and pointless on a runner.
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install -e ".[dev,ml,llm,serve]"
+
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+
+      - name: Type check
+        run: mypy src
+
+      - name: Tests
+        # Network-marked tests hit the live SEC API. Running them here would
+        # add load to a public service on every push and make CI fail when
+        # EDGAR is slow, so they are deselected.
+        run: pytest -m "not network" --cov=src --cov-report=term-missing --cov-fail-under=55
+
+      - name: Validate DAGs parse
+        run: |
+          pip install "apache-airflow==2.10.5" --constraint \
+            "https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.11.txt"
+          python -c "
+          from airflow.models import DagBag
+          bag = DagBag('dags', include_examples=False)
+          assert not bag.import_errors, bag.import_errors
+          print(f'{len(bag.dags)} DAGs parsed cleanly: {sorted(bag.dags)}')
+          assert len(bag.dags) == 3
+          "
+
+  stack-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose and observability config
+        run: |
+          docker compose -f deploy/docker-compose.yml config --quiet
+          echo "compose valid"
+
+      - name: Check Prometheus rules
+        run: |
+          docker run --rm -v "$PWD/deploy/prometheus:/cfg" \
+            --entrypoint promtool prom/prometheus:v2.54.1 check rules /cfg/alerts.yml
+
+      - name: Check Alertmanager config
+        run: |
+          docker run --rm -v "$PWD/deploy/alertmanager:/cfg" \
+            --entrypoint amtool prom/alertmanager:v0.27.0 check-config /cfg/alertmanager.yml
+
+      - name: Bring up datastores and apply schema
+        run: |
+          docker compose -f deploy/docker-compose.yml up -d minio postgres redis mongo
+          for i in $(seq 1 30); do
+            if docker compose -f deploy/docker-compose.yml ps --format json | grep -q healthy; then break; fi
+            sleep 5
+          done
+          docker compose -f deploy/docker-compose.yml ps

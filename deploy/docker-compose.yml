@@ -114,7 +114,71 @@ services:
       start_period: 20s
     restart: unless-stopped
 
+  # --- observability ------------------------------------------------------
+  # Airflow tasks are batch jobs that exit before a scrape can reach them, so
+  # they push metrics here instead of being pulled.
+  pushgateway:
+    image: prom/pushgateway:v1.9.0
+    container_name: filing-intel-pushgateway
+    ports:
+      - "9091:9091"
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: filing-intel-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=15d
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prometheus-data:/prometheus
+    extra_hosts:
+      # The API runs on the host during development, not in a container.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - pushgateway
+    restart: unless-stopped
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: filing-intel-alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: filing-intel-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      # Dashboards are provisioned from version control, never clicked together
+      # by hand - a dashboard that exists only in someone's browser is not an
+      # artefact of the system.
+      GF_DASHBOARDS_MIN_REFRESH_INTERVAL: 5s
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   minio-data:
   postgres-data:
   mongo-data:
+  prometheus-data:
+  grafana-data:

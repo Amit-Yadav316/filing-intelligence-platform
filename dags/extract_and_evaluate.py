@@ -38,6 +38,7 @@ def extract_and_evaluate() -> None:
     @task
     def extract_and_score() -> dict:
         """Run extraction over the indexed corpus and score every field."""
+        from scripts.run_extraction import indexed_filings, load_facts
         from src.config.settings import get_settings
         from src.embed.embedding_service import EmbeddingService
         from src.evaluate.evaluator import ExtractionEvaluator
@@ -47,7 +48,6 @@ def extract_and_evaluate() -> None:
         from src.retrieve.hybrid import HybridRetriever
         from src.retrieve.indexes import BM25Index, VectorIndex
         from src.retrieve.store import ChunkStore, fiscal_year_for
-        from scripts.run_extraction import indexed_filings, load_facts
 
         settings = get_settings()
         resolver = XBRLResolver.from_config()

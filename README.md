@@ -2,7 +2,10 @@
 
 A production document pipeline for SEC filings. Ingests EDGAR 10-K and 10-Q filings into immutable object storage, parses and chunks them on their legal structure, embeds and indexes them for hybrid retrieval, extracts structured financial fields with an LLM, and scores every extraction against XBRL ground truth from the same filing. Orchestrated with Airflow, instrumented with Prometheus, governed by SLOs.
 
-> **Status**: in development. Every number in this README marked `TBD` is a placeholder and will be replaced by a measured value from a pipeline run. Nothing here is estimated.
+> **Every number in this README was measured by a run, not estimated.** Where a
+> result is unflattering - hybrid retrieval losing to dense alone, extraction
+> accuracy below its own SLO, a prompt change that made things worse - it is
+> reported as measured. The reproduction commands are in [Running it](#running-it).
 
 ---
 
@@ -180,17 +183,33 @@ This is the archival half of document extraction and archival. An answer you can
 
 ## Service level objectives
 
-| SLO | Target | Measured |
-|---|---|---|
-| Extraction accuracy, `total_revenue`, within 0.5% | ≥ 90% | `TBD` |
-| Index freshness behind EDGAR | < 24h | `TBD` |
-| `/search` p95 latency | < 800 ms | `TBD` |
+Three SLOs with error budgets, alerting on **burn rate** rather than on threshold
+crossings. A `p95 > 800ms` alert fires on one slow query at 3am and teaches people
+to ignore it; a burn-rate alert fires when failures are arriving fast enough to
+exhaust the month's budget early.
 
-Alerts fire on error-budget burn over a rolling window, not on instantaneous threshold breaches. See [`docs/RUNBOOK.md`](docs/RUNBOOK.md) for the three failure modes and their remediation.
+| SLO | Target | Measured | Status |
+|---|---|---|---|
+| Extraction accuracy, `total_revenue` | ≥ 90% | **57.1%** (80.0% when answered) | **Not met** |
+| Index freshness behind EDGAR | < 24h | corpus is historical (FY2022-24) | n/a on a fixed corpus |
+| `/search` p95 latency | < 800 ms | **148-170 ms** | **Met**, wide margin |
 
-**Quality gate**: `extract_and_evaluate` will not write an extraction to Mongo as authoritative if batch accuracy falls below the SLO floor. A degraded model is skipped, not shipped, and the DAG still reports green.
+The accuracy SLO is breached and reported as breached. Lowering the target to
+match current performance would make it meaningless; the gap is tracked as
+retrieval work in [`docs/SLOS.md`](docs/SLOS.md).
 
----
+**The quality gate**: `extract_and_evaluate` will not write extractions to the
+document store when batch accuracy falls below the floor. The downstream tasks
+are **skipped, not failed** — a degraded model is not a broken pipeline, and the
+DAG did exactly what it should, which is notice and refuse. The previous good
+extractions stay in place and the alert fires on the accuracy metric rather than
+on a red task.
+
+Alert rules are in [`deploy/prometheus/alerts.yml`](deploy/prometheus/alerts.yml),
+routing by severity in [`deploy/alertmanager/`](deploy/alertmanager/), and three
+worked failure modes in [`docs/RUNBOOK.md`](docs/RUNBOOK.md) — EDGAR rate-limiting,
+LLM provider 429s, and a growing embedding backlog. All three happened while
+building this.
 
 ## Retrieval
 
@@ -263,27 +282,80 @@ and its weakness shows up honestly in the table above.
 ## Running it
 
 ```bash
-git clone <repo>
+git clone https://github.com/Amit-Yadav316/filing-intelligence-platform
 cd filing-intelligence-platform
-cp .env.example .env          # set EDGAR_USER_AGENT and an LLM API key
-make up                       # docker compose: minio, postgres, mongo, redis, mlflow-free stack
-make seed                     # load the committed sample corpus
-make demo                     # one search, one extraction, one scored evaluation
+
+cp .env.example .env          # set EDGAR_USER_AGENT (required) and an LLM key
+make venv && make install     # Python 3.11; torch installs CPU-only
+make up                       # MinIO, Postgres+pgvector, Redis, Mongo, Prometheus, Grafana
 ```
+
+`EDGAR_USER_AGENT` must contain a real contact address. The SEC returns **403**
+without one, and `Settings` refuses to construct with the placeholder still in
+place — a misconfiguration fails immediately rather than twenty minutes into a
+backfill.
+
+Then, end to end:
 
 ```bash
-curl -s localhost:8000/search \
-  -d '{"q":"supply chain concentration risk","form":"10-K","year":2023}' | jq
+make universe                 # resolve 55 companies from EDGAR's ticker map
+make probe                    # can XBRL ground truth be resolved? gate: >=70%
+python -m scripts.parse_filing --land AAPL:10-K:2023   # ingest one filing
+make index                    # parse, chunk, embed, index everything landed
+make ablation                 # BM25 vs dense vs hybrid on 38 labelled queries
+python -m scripts.run_extraction   # extract and score against XBRL
 ```
 
-Full pipeline against live EDGAR:
+Serve it:
 
 ```bash
-astro dev start
-airflow dags trigger ingest_edgar_filings
+uvicorn src.serving.api:app --port 8000
+curl -s localhost:8000/health | jq
 ```
 
----
+One search, with the full provenance chain:
+
+```bash
+curl -s localhost:8000/search -H 'Content-Type: application/json'   -d '{"q":"supply chain concentration risk","top_k":2}' | jq '.results[0]'
+```
+
+```json
+{
+  "rank": 1,
+  "score": 0.031514,
+  "found_by": ["bm25", "dense"],
+  "chunk_type": "prose",
+  "text": "While we work to enhance the resiliency and redundancy of our supply chain, which is currently concentrated in...",
+  "citation": {
+    "chunk_id": "0001045810-24-000029::item7::c7",
+    "company": "NVIDIA CORP",
+    "form": "10-K",
+    "filed": "2024-02-21",
+    "item": "Item 7",
+    "section": "Management's Discussion and Analysis",
+    "char_start": 186743,
+    "char_end": 189070,
+    "edgar_url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581024000029/"
+  }
+}
+```
+
+That is the archival half of the system: the answer resolves to a character range
+in a named filing, and `parser_version` travels with every chunk so an offset
+recorded today is known to be stale rather than silently wrong if the parser changes.
+
+| Endpoint | Purpose |
+|---|---|
+| `POST /search` | Hybrid retrieval with metadata pre-filtering |
+| `GET /extract/{accession}` | Stored extraction and its scorecard |
+| `GET /accuracy` | Per-field accuracy, live — the README table from the database |
+| `GET /ask` | Passages answering a question, cited |
+| `GET /health` | Index freshness, model versions, SLO status |
+| `GET /metrics` | Prometheus series |
+
+`/ask` is deliberately **extractive, not generative**. The project's claim is
+measured extraction accuracy; generating an unmeasured free-text answer beside
+scored ones would undercut exactly that.
 
 ## What this does not do, and why
 
@@ -293,7 +365,10 @@ airflow dags trigger ingest_edgar_filings
 | HashiCorp Vault | secrets are env-injected; Vault is correct at org scale, not here |
 | Kafka or NATS streaming | EDGAR publishes in daily batches, so batch orchestration is the honest fit |
 | LLM fine-tuning | schema-constrained prompting hits the accuracy target; fine-tuning would be cost without measured benefit |
-| Terraform, ArgoCD | no cloud target; a Helm chart is provided and applied to a local `kind` cluster |
+| Terraform, ArgoCD | no cloud target, and no deployment to manage yet |
+| Helm chart / `kind` | **Not built.** Day 7 ran out before it. The platform is containerised and the compose stack is the honest deployment story; a chart that was never applied would be a claim, not an artefact |
+| Generative answers in `/ask` | The project's claim is *measured* accuracy. An unmeasured free-text answer sitting beside scored figures would undercut the whole argument |
+| Fine-tuning | Schema-constrained prompting already reaches 80-90% when the model answers; the bottleneck is retrieval, and fine-tuning would not fix that |
 
 Naming what was deliberately left out is part of the design record.
 

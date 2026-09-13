@@ -73,18 +73,18 @@ What the API actually does when the caller names a company. The candidate set is
 
 ## Extraction accuracy
 
-_Generated 2026-09-13T09:59:44+00:00 - 14 filings, gemini-3.5-flash, 18 retrieved chunks per filing, $0.0000 total._
+_Generated 2026-09-13T15:31:58+00:00 - 21 filings, openai/gpt-oss-120b, 14 retrieved chunks per filing, $0.0000 total._
 
 Every figure below is scored against the XBRL fact the SEC published in the same filing. `unresolvable` means no XBRL fact could be resolved to compare against; those cases are excluded from the accuracy denominator and shown separately rather than quietly dropped.
 
 | Field | Exact | Within 0.5% | Scale error | Wrong | Hallucinated | Abstained | **Accuracy** | **When answered** | Unresolvable |
 |---|---|---|---|---|---|---|---|---|---|
-| `total_revenue` | 8 | 0 | 0 | 2 | 0 | 4 | **57.1%** | **80.0%** | 0 |
-| `net_income` | 6 | 0 | 0 | 3 | 0 | 5 | **42.9%** | **66.7%** | 0 |
-| `total_assets` | 9 | 0 | 0 | 1 | 0 | 4 | **64.3%** | **90.0%** | 0 |
-| `operating_cash_flow` | 8 | 0 | 0 | 1 | 0 | 5 | **57.1%** | **88.9%** | 0 |
+| `total_revenue` | 15 | 0 | 0 | 3 | 0 | 3 | **71.4%** | **83.3%** | 0 |
+| `net_income` | 10 | 1 | 0 | 7 | 0 | 3 | **52.4%** | **61.1%** | 0 |
+| `total_assets` | 17 | 0 | 0 | 1 | 0 | 3 | **81.0%** | **94.4%** | 0 |
+| `operating_cash_flow` | 18 | 0 | 0 | 0 | 0 | 3 | **85.7%** | **100.0%** | 0 |
 
-**Overall: 31/56 scoreable field extractions correct (55.4%)** across 14 filings.
+**Overall: 61/84 scoreable field extractions correct (72.6%)** across 21 filings.
 
 **Accuracy and 'when answered' are two different questions, and the gap between them is the finding.** Overall accuracy counts an abstention as not-correct, because a model that abstains on everything is useless. 'When answered' excludes abstentions and asks the different question: when this model does commit to a figure, how often is it right? A large gap means the model is precise but under-served by retrieval - the fix is the context, not the model. A small gap with low accuracy would mean the opposite.
 
@@ -94,20 +94,23 @@ Attributed by the chunks the model cited for each field, so this is measured fro
 
 | Source | Correct | Total | Accuracy |
 |---|---|---|---|
-| Table | 31 | 56 | 55.4% |
+| Table | 61 | 84 | 72.6% |
 
 ### Failure taxonomy
 
 | Failure mode | Count | What it means |
 |---|---|---|
-| `wrong` | 7 | A different figure of the same magnitude - wrong line item or the prior-year comparative column. |
+| `wrong` | 11 | A different figure of the same magnitude - wrong line item or the prior-year comparative column. |
 
 Worst cases:
 
-- `total_revenue` in EXXON MOBIL CORP 10-K (0000034088-23-000020): extracted `398675000000` against `413680000000` - wrong line item or wrong period
+- `net_income` in EXXON MOBIL CORP 10-K (0000034088-23-000020): extracted `57577000000` against `55740000000` - wrong line item or wrong period
+- `total_revenue` in CHEVRON CORP 10-K (0000093410-23-000009): extracted `246252000000` against `235717000000` - wrong line item or wrong period
 - `net_income` in UNITEDHEALTH GROUP INC 10-K (0000731766-23-000008): extracted `20639000000` against `20120000000` - wrong line item or wrong period
+- `total_assets` in UNITEDHEALTH GROUP INC 10-K (0000731766-23-000008): extracted `144286000000` against `245705000000` - wrong line item or wrong period
 - `net_income` in PROCTER & GAMBLE Co 10-K (0000080424-23-000073): extracted `14738000000` against `14653000000` - wrong line item or wrong period
-- `net_income` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `35153000000` against `17941000000` - wrong line item or wrong period
-- `total_assets` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `167558000000` against `187378000000` - wrong line item or wrong period
-- `operating_cash_flow` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `22791000000` against `21194000000` - wrong line item or wrong period
-- `total_revenue` in EXXON MOBIL CORP 10-K (0000034088-24-000018): extracted `334697000000` against `344582000000` - wrong line item or wrong period
+- `total_revenue` in CHEVRON CORP 10-K (0000093410-24-000013): extracted `48933000000` against `196913000000` - wrong line item or wrong period
+- `net_income` in CHEVRON CORP 10-K (0000093410-24-000013): extracted `2259000000` against `21369000000` - wrong line item or wrong period
+- `net_income` in UNITEDHEALTH GROUP INC 10-K (0000731766-24-000081): extracted `23144000000` against `22381000000` - wrong line item or wrong period
+- `total_revenue` in Walmart Inc. 10-K (0000104169-24-000056): extracted `648125000000` against `642637000000` - wrong line item or wrong period
+- `net_income` in Walmart Inc. 10-K (0000104169-24-000056): extracted `16270000000` against `15511000000` - wrong line item or wrong period

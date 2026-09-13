@@ -5,7 +5,7 @@
     "company": "JOHNSON & JOHNSON",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
+    "model": "openai/gpt-oss-120b",
     "accuracy": 0.0,
     "scores": [
       {
@@ -17,17 +17,17 @@
         "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-23-000016::item7::c5",
           "0000200406-23-000016::item7::c30",
-          "0000200406-23-000016::item7::c70",
+          "0000200406-23-000016::item7::c43",
+          "0000200406-23-000016::item7::c47",
           "0000200406-23-000016::item8::c1",
           "0000200406-23-000016::item8::c4",
+          "0000200406-23-000016::item8::c11",
           "0000200406-23-000016::item8::c13",
           "0000200406-23-000016::item8::c29",
           "0000200406-23-000016::item8::c65",
-          "0000200406-23-000016::item8::c79",
-          "0000200406-23-000016::item8::c93",
-          "0000200406-23-000016::item8::c94",
+          "0000200406-23-000016::item8::c131",
+          "0000200406-23-000016::item8::c140",
           "0000200406-23-000016::item15::c1"
         ],
         "note": "model declined to answer"
@@ -41,17 +41,17 @@
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-23-000016::item7::c5",
           "0000200406-23-000016::item7::c30",
-          "0000200406-23-000016::item7::c70",
+          "0000200406-23-000016::item7::c43",
+          "0000200406-23-000016::item7::c47",
           "0000200406-23-000016::item8::c1",
           "0000200406-23-000016::item8::c4",
+          "0000200406-23-000016::item8::c11",
           "0000200406-23-000016::item8::c13",
           "0000200406-23-000016::item8::c29",
           "0000200406-23-000016::item8::c65",
-          "0000200406-23-000016::item8::c79",
-          "0000200406-23-000016::item8::c93",
-          "0000200406-23-000016::item8::c94",
+          "0000200406-23-000016::item8::c131",
+          "0000200406-23-000016::item8::c140",
           "0000200406-23-000016::item15::c1"
         ],
         "note": "model declined to answer"
@@ -65,17 +65,17 @@
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-23-000016::item7::c5",
           "0000200406-23-000016::item7::c30",
-          "0000200406-23-000016::item7::c70",
+          "0000200406-23-000016::item7::c43",
+          "0000200406-23-000016::item7::c47",
           "0000200406-23-000016::item8::c1",
           "0000200406-23-000016::item8::c4",
+          "0000200406-23-000016::item8::c11",
           "0000200406-23-000016::item8::c13",
           "0000200406-23-000016::item8::c29",
           "0000200406-23-000016::item8::c65",
-          "0000200406-23-000016::item8::c79",
-          "0000200406-23-000016::item8::c93",
-          "0000200406-23-000016::item8::c94",
+          "0000200406-23-000016::item8::c131",
+          "0000200406-23-000016::item8::c140",
           "0000200406-23-000016::item15::c1"
         ],
         "note": "model declined to answer"
@@ -89,17 +89,17 @@
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-23-000016::item7::c5",
           "0000200406-23-000016::item7::c30",
-          "0000200406-23-000016::item7::c70",
+          "0000200406-23-000016::item7::c43",
+          "0000200406-23-000016::item7::c47",
           "0000200406-23-000016::item8::c1",
           "0000200406-23-000016::item8::c4",
+          "0000200406-23-000016::item8::c11",
           "0000200406-23-000016::item8::c13",
           "0000200406-23-000016::item8::c29",
           "0000200406-23-000016::item8::c65",
-          "0000200406-23-000016::item8::c79",
-          "0000200406-23-000016::item8::c93",
-          "0000200406-23-000016::item8::c94",
+          "0000200406-23-000016::item8::c131",
+          "0000200406-23-000016::item8::c140",
           "0000200406-23-000016::item15::c1"
         ],
         "note": "model declined to answer"
@@ -112,39 +112,34 @@
     "company": "EXXON MOBIL CORP",
     "form": "10-K",
     "fiscal_year": 2022,
-    "model": "gemini-3.5-flash",
+    "model": "openai/gpt-oss-120b",
     "accuracy": 0.75,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "wrong",
-        "extracted": "398675000000",
+        "verdict": "exact",
+        "extracted": "413680000000",
         "truth": "413680000000",
-        "relative_error": 0.036271997679365696,
+        "relative_error": 0.0,
         "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
-          "0000034088-23-000020::item16::c4",
-          "0000034088-23-000020::item16::c122",
-          "0000034088-23-000020::item16::c215"
+          "0000034088-23-000020::item16::c122"
         ],
-        "note": "wrong line item or wrong period"
+        "note": ""
       },
       {
         "field": "net_income",
-        "verdict": "exact",
-        "extracted": "55740000000",
+        "verdict": "wrong",
+        "extracted": "57577000000",
         "truth": "55740000000",
-        "relative_error": 0.0,
+        "relative_error": 0.032956584140653035,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000034088-23-000020::item16::c4",
-          "0000034088-23-000020::item16::c10",
-          "0000034088-23-000020::item16::c122",
-          "0000034088-23-000020::item16::c215"
+          "0000034088-23-000020::item16::c122"
         ],
-        "note": ""
+        "note": "wrong line item or wrong period"
       },
       {
         "field": "total_assets",
@@ -155,8 +150,7 @@
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000034088-23-000020::item16::c4",
-          "0000034088-23-000020::item16::c215"
+          "0000034088-23-000020::item16::c124"
         ],
         "note": ""
       },
@@ -169,8 +163,6 @@
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000034088-23-000020::item16::c6",
-          "0000034088-23-000020::item16::c83",
           "0000034088-23-000020::item16::c125"
         ],
         "note": ""
@@ -183,34 +175,34 @@
     "company": "CHEVRON CORP",
     "form": "10-K",
     "fiscal_year": 2022,
-    "model": "gemini-3.5-flash",
-    "accuracy": 1.0,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 0.75,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "exact",
-        "extracted": "235717000000",
+        "verdict": "wrong",
+        "extracted": "246252000000",
         "truth": "235717000000",
-        "relative_error": 0.0,
+        "relative_error": 0.044693424742381756,
         "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
         "scale_factor": null,
         "source_chunks": [
           "0000093410-23-000009::item14::c103"
         ],
-        "note": ""
+        "note": "wrong line item or wrong period"
       },
       {
         "field": "net_income",
-        "verdict": "exact",
-        "extracted": "35465000000",
+        "verdict": "within_tolerance",
+        "extracted": "35608000000",
         "truth": "35465000000",
-        "relative_error": 0.0,
+        "relative_error": 0.004032144367686451,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
           "0000093410-23-000009::item14::c103"
         ],
-        "note": ""
+        "note": "within 0.50%"
       },
       {
         "field": "total_assets",
@@ -221,8 +213,7 @@
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000093410-23-000009::item14::c105",
-          "0000093410-23-000009::item14::c159"
+          "0000093410-23-000009::item14::c105"
         ],
         "note": ""
       },
@@ -235,8 +226,7 @@
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000093410-23-000009::item14::c72",
-          "0000093410-23-000009::item14::c106"
+          "0000093410-23-000009::item14::c72"
         ],
         "note": ""
       }
@@ -248,8 +238,8 @@
     "company": "NVIDIA CORP",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
-    "accuracy": 0.25,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
@@ -260,88 +250,48 @@
         "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
-          "0001045810-23-000017::item15::c7",
-          "0001045810-23-000017::item15::c102"
+          "0001045810-23-000017::item15::c105"
         ],
         "note": ""
       },
       {
         "field": "net_income",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "4368000000",
         "truth": "4368000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0001045810-23-000017::item7::c15",
-          "0001045810-23-000017::item7::c16",
-          "0001045810-23-000017::item7::c18",
-          "0001045810-23-000017::item7::c23",
-          "0001045810-23-000017::item7::c26",
-          "0001045810-23-000017::item15::c7",
-          "0001045810-23-000017::item15::c10",
-          "0001045810-23-000017::item15::c11",
-          "0001045810-23-000017::item15::c12",
-          "0001045810-23-000017::item15::c13",
-          "0001045810-23-000017::item15::c14",
-          "0001045810-23-000017::item15::c34",
-          "0001045810-23-000017::item15::c65",
-          "0001045810-23-000017::item15::c102"
+          "0001045810-23-000017::item15::c8"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "total_assets",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "41182000000",
         "truth": "41182000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0001045810-23-000017::item7::c15",
-          "0001045810-23-000017::item7::c16",
-          "0001045810-23-000017::item7::c18",
-          "0001045810-23-000017::item7::c23",
-          "0001045810-23-000017::item7::c26",
-          "0001045810-23-000017::item15::c7",
-          "0001045810-23-000017::item15::c10",
-          "0001045810-23-000017::item15::c11",
-          "0001045810-23-000017::item15::c12",
-          "0001045810-23-000017::item15::c13",
-          "0001045810-23-000017::item15::c14",
-          "0001045810-23-000017::item15::c34",
-          "0001045810-23-000017::item15::c65",
-          "0001045810-23-000017::item15::c102"
+          "0001045810-23-000017::item15::c10"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "operating_cash_flow",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "5641000000",
         "truth": "5641000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0001045810-23-000017::item7::c15",
-          "0001045810-23-000017::item7::c16",
-          "0001045810-23-000017::item7::c18",
-          "0001045810-23-000017::item7::c23",
-          "0001045810-23-000017::item7::c26",
-          "0001045810-23-000017::item15::c7",
-          "0001045810-23-000017::item15::c10",
-          "0001045810-23-000017::item15::c11",
-          "0001045810-23-000017::item15::c12",
-          "0001045810-23-000017::item15::c13",
-          "0001045810-23-000017::item15::c14",
-          "0001045810-23-000017::item15::c34",
-          "0001045810-23-000017::item15::c65",
-          "0001045810-23-000017::item15::c102"
+          "0001045810-23-000017::item7::c26"
         ],
-        "note": "model declined to answer"
+        "note": ""
       }
     ]
   },
@@ -351,8 +301,8 @@
     "company": "UNITEDHEALTH GROUP INC",
     "form": "10-K",
     "fiscal_year": 2022,
-    "model": "gemini-3.5-flash",
-    "accuracy": 0.75,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 0.5,
     "scores": [
       {
         "field": "total_revenue",
@@ -363,8 +313,6 @@
         "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
-          "0000731766-23-000008::item7::c6",
-          "0000731766-23-000008::item8::c8",
           "0000731766-23-000008::item8::c92"
         ],
         "note": ""
@@ -378,23 +326,22 @@
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000731766-23-000008::item7::c6",
-          "0000731766-23-000008::item8::c8"
+          "0000731766-23-000008::item8::c11"
         ],
         "note": "wrong line item or wrong period"
       },
       {
         "field": "total_assets",
-        "verdict": "exact",
-        "extracted": "245705000000",
+        "verdict": "wrong",
+        "extracted": "144286000000",
         "truth": "245705000000",
-        "relative_error": 0.0,
+        "relative_error": 0.41276734295191386,
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000731766-23-000008::item8::c92"
+          "0000731766-23-000008::item15::c8"
         ],
-        "note": ""
+        "note": "wrong line item or wrong period"
       },
       {
         "field": "operating_cash_flow",
@@ -405,7 +352,6 @@
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000731766-23-000008::item7::c5",
           "0000731766-23-000008::item7::c14"
         ],
         "note": ""
@@ -418,112 +364,63 @@
     "company": "HOME DEPOT, INC.",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
-    "accuracy": 0.0,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "157403000000",
         "truth": "157403000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
         "scale_factor": null,
         "source_chunks": [
-          "0000354950-23-000059::item7::c2",
-          "0000354950-23-000059::item7::c4",
-          "0000354950-23-000059::item7::c7",
-          "0000354950-23-000059::item7::c13",
-          "0000354950-23-000059::item7::c14",
-          "0000354950-23-000059::item7::c25",
-          "0000354950-23-000059::item8::c1",
-          "0000354950-23-000059::item8::c9",
-          "0000354950-23-000059::item8::c17",
-          "0000354950-23-000059::item8::c66",
-          "0000354950-23-000059::item8::c68",
-          "0000354950-23-000059::item8::c97",
-          "0000354950-23-000059::item8::c98",
-          "0000354950-23-000059::item8::c99"
+          "0000354950-23-000059::item8::c55",
+          "0000354950-23-000059::item8::c60"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "net_income",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "17105000000",
         "truth": "17105000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000354950-23-000059::item7::c2",
           "0000354950-23-000059::item7::c4",
-          "0000354950-23-000059::item7::c7",
-          "0000354950-23-000059::item7::c13",
-          "0000354950-23-000059::item7::c14",
-          "0000354950-23-000059::item7::c25",
-          "0000354950-23-000059::item8::c1",
-          "0000354950-23-000059::item8::c9",
-          "0000354950-23-000059::item8::c17",
-          "0000354950-23-000059::item8::c66",
-          "0000354950-23-000059::item8::c68",
-          "0000354950-23-000059::item8::c97",
-          "0000354950-23-000059::item8::c98",
-          "0000354950-23-000059::item8::c99"
+          "0000354950-23-000059::item7::c8",
+          "0000354950-23-000059::item7::c17"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "total_assets",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "76445000000",
         "truth": "76445000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000354950-23-000059::item7::c2",
-          "0000354950-23-000059::item7::c4",
-          "0000354950-23-000059::item7::c7",
-          "0000354950-23-000059::item7::c13",
-          "0000354950-23-000059::item7::c14",
-          "0000354950-23-000059::item7::c25",
-          "0000354950-23-000059::item8::c1",
-          "0000354950-23-000059::item8::c9",
-          "0000354950-23-000059::item8::c17",
-          "0000354950-23-000059::item8::c66",
-          "0000354950-23-000059::item8::c68",
-          "0000354950-23-000059::item8::c97",
-          "0000354950-23-000059::item8::c98",
-          "0000354950-23-000059::item8::c99"
+          "0000354950-23-000059::item8::c9"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "operating_cash_flow",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "14615000000",
         "truth": "14615000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000354950-23-000059::item7::c2",
-          "0000354950-23-000059::item7::c4",
-          "0000354950-23-000059::item7::c7",
-          "0000354950-23-000059::item7::c13",
-          "0000354950-23-000059::item7::c14",
-          "0000354950-23-000059::item7::c25",
-          "0000354950-23-000059::item8::c1",
-          "0000354950-23-000059::item8::c9",
-          "0000354950-23-000059::item8::c17",
-          "0000354950-23-000059::item8::c66",
-          "0000354950-23-000059::item8::c68",
-          "0000354950-23-000059::item8::c97",
-          "0000354950-23-000059::item8::c98",
-          "0000354950-23-000059::item8::c99"
+          "0000354950-23-000059::item8::c17"
         ],
-        "note": "model declined to answer"
+        "note": ""
       }
     ]
   },
@@ -533,7 +430,7 @@
     "company": "ORACLE CORP",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
+    "model": "openai/gpt-oss-120b",
     "accuracy": 1.0,
     "scores": [
       {
@@ -545,7 +442,7 @@
         "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
         "scale_factor": null,
         "source_chunks": [
-          "0000950170-23-028914::item15::c13"
+          "0000950170-23-028914::item7::c31"
         ],
         "note": ""
       },
@@ -558,8 +455,6 @@
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000950170-23-028914::item15::c13",
-          "0000950170-23-028914::item15::c19",
           "0000950170-23-028914::item7::c71"
         ],
         "note": ""
@@ -586,8 +481,7 @@
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000950170-23-028914::item15::c19",
-          "0000950170-23-028914::item7::c71"
+          "0000950170-23-028914::item7::c68"
         ],
         "note": ""
       }
@@ -599,8 +493,8 @@
     "company": "MICROSOFT CORP",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
-    "accuracy": 0.25,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
@@ -611,85 +505,48 @@
         "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
         "scale_factor": null,
         "source_chunks": [
-          "0000950170-23-035122::item7::c12",
           "0000950170-23-035122::item8::c1"
         ],
         "note": ""
       },
       {
         "field": "net_income",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "72361000000",
         "truth": "72361000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000950170-23-035122::front::c8",
-          "0000950170-23-035122::item7::c5",
-          "0000950170-23-035122::item7::c12",
-          "0000950170-23-035122::item7::c14",
-          "0000950170-23-035122::item7::c16",
-          "0000950170-23-035122::item8::c1",
-          "0000950170-23-035122::item8::c3",
-          "0000950170-23-035122::item8::c6",
-          "0000950170-23-035122::item8::c7",
-          "0000950170-23-035122::item8::c8",
-          "0000950170-23-035122::item8::c17",
-          "0000950170-23-035122::item8::c90",
-          "0000950170-23-035122::item15::c2"
+          "0000950170-23-035122::item8::c1"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "total_assets",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "411976000000",
         "truth": "411976000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000950170-23-035122::front::c8",
-          "0000950170-23-035122::item7::c5",
-          "0000950170-23-035122::item7::c12",
-          "0000950170-23-035122::item7::c14",
-          "0000950170-23-035122::item7::c16",
-          "0000950170-23-035122::item8::c1",
-          "0000950170-23-035122::item8::c3",
-          "0000950170-23-035122::item8::c6",
-          "0000950170-23-035122::item8::c7",
-          "0000950170-23-035122::item8::c8",
-          "0000950170-23-035122::item8::c17",
-          "0000950170-23-035122::item8::c90",
-          "0000950170-23-035122::item15::c2"
+          "0000950170-23-035122::item8::c3"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "operating_cash_flow",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "87582000000",
         "truth": "87582000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000950170-23-035122::front::c8",
-          "0000950170-23-035122::item7::c5",
-          "0000950170-23-035122::item7::c12",
-          "0000950170-23-035122::item7::c14",
-          "0000950170-23-035122::item7::c16",
-          "0000950170-23-035122::item8::c1",
-          "0000950170-23-035122::item8::c3",
-          "0000950170-23-035122::item8::c6",
-          "0000950170-23-035122::item8::c7",
-          "0000950170-23-035122::item8::c8",
-          "0000950170-23-035122::item8::c17",
-          "0000950170-23-035122::item8::c90",
-          "0000950170-23-035122::item15::c2"
+          "0000950170-23-035122::item8::c4"
         ],
-        "note": "model declined to answer"
+        "note": ""
       }
     ]
   },
@@ -699,7 +556,7 @@
     "company": "PROCTER & GAMBLE Co",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
+    "model": "openai/gpt-oss-120b",
     "accuracy": 0.75,
     "scores": [
       {
@@ -711,7 +568,7 @@
         "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
-          "0000080424-23-000073::item7::c15"
+          "0000080424-23-000073::item8::c12"
         ],
         "note": ""
       },
@@ -724,7 +581,7 @@
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000080424-23-000073::item7::c15"
+          "0000080424-23-000073::item8::c12"
         ],
         "note": "wrong line item or wrong period"
       },
@@ -750,9 +607,7 @@
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000080424-23-000073::item7::c15",
-          "0000080424-23-000073::item7::c50",
-          "0000080424-23-000073::item7::c76"
+          "0000080424-23-000073::item7::c50"
         ],
         "note": ""
       }
@@ -764,52 +619,34 @@
     "company": "Apple Inc.",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
-    "accuracy": 0.25,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "383285000000",
         "truth": "383285000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
         "scale_factor": null,
         "source_chunks": [
-          "0000320193-23-000106::item1A::c43",
-          "0000320193-23-000106::item8::c1",
-          "0000320193-23-000106::item8::c7",
-          "0000320193-23-000106::item8::c12",
-          "0000320193-23-000106::item8::c13",
-          "0000320193-23-000106::item8::c17",
-          "0000320193-23-000106::item8::c29",
-          "0000320193-23-000106::item8::c43",
-          "0000320193-23-000106::item8::c44",
-          "0000320193-23-000106::item15::c1"
+          "0000320193-23-000106::item7::c3"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "net_income",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "96995000000",
         "truth": "96995000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000320193-23-000106::item1A::c43",
-          "0000320193-23-000106::item8::c1",
-          "0000320193-23-000106::item8::c7",
-          "0000320193-23-000106::item8::c12",
-          "0000320193-23-000106::item8::c13",
-          "0000320193-23-000106::item8::c17",
-          "0000320193-23-000106::item8::c29",
-          "0000320193-23-000106::item8::c43",
-          "0000320193-23-000106::item8::c44",
-          "0000320193-23-000106::item15::c1"
+          "0000320193-23-000106::item8::c5"
         ],
-        "note": "model declined to answer"
+        "note": ""
       },
       {
         "field": "total_assets",
@@ -826,100 +663,107 @@
       },
       {
         "field": "operating_cash_flow",
-        "verdict": "abstained",
-        "extracted": null,
+        "verdict": "exact",
+        "extracted": "110543000000",
         "truth": "110543000000",
-        "relative_error": null,
+        "relative_error": 0.0,
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000320193-23-000106::item1A::c43",
-          "0000320193-23-000106::item8::c1",
-          "0000320193-23-000106::item8::c7",
-          "0000320193-23-000106::item8::c12",
-          "0000320193-23-000106::item8::c13",
-          "0000320193-23-000106::item8::c17",
-          "0000320193-23-000106::item8::c29",
-          "0000320193-23-000106::item8::c43",
-          "0000320193-23-000106::item8::c44",
-          "0000320193-23-000106::item15::c1"
+          "0000320193-23-000106::item8::c11"
         ],
-        "note": "model declined to answer"
+        "note": ""
       }
     ]
   },
   {
-    "accession": "0000200406-24-000013",
-    "cik": "0000200406",
-    "company": "JOHNSON & JOHNSON",
+    "accession": "0000021344-24-000009",
+    "cik": "0000021344",
+    "company": "COCA COLA CO",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
+    "model": "openai/gpt-oss-120b",
     "accuracy": 0.0,
     "scores": [
       {
         "field": "total_revenue",
         "verdict": "abstained",
         "extracted": null,
-        "truth": "79990000000",
+        "truth": "45754000000",
         "relative_error": null,
-        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-24-000013::item7::c4",
-          "0000200406-24-000013::item7::c42",
-          "0000200406-24-000013::item8::c4",
-          "0000200406-24-000013::item8::c13",
-          "0000200406-24-000013::item8::c15",
-          "0000200406-24-000013::item8::c17",
-          "0000200406-24-000013::item8::c41",
-          "0000200406-24-000013::item8::c70",
-          "0000200406-24-000013::item8::c96",
-          "0000200406-24-000013::item8::c99",
-          "0000200406-24-000013::item8::c101",
-          "0000200406-24-000013::item8::c243",
-          "0000200406-24-000013::item8::c247"
+          "0000021344-24-000009::item8::c1",
+          "0000021344-24-000009::item8::c2",
+          "0000021344-24-000009::item8::c6",
+          "0000021344-24-000009::item8::c172",
+          "0000021344-24-000009::item8::c174",
+          "0000021344-24-000009::item8::c180",
+          "0000021344-24-000009::item8::c182",
+          "0000021344-24-000009::item15::c3"
         ],
         "note": "model declined to answer"
       },
       {
         "field": "net_income",
-        "verdict": "wrong",
-        "extracted": "35153000000",
-        "truth": "17941000000",
-        "relative_error": 0.9593668134440667,
+        "verdict": "abstained",
+        "extracted": null,
+        "truth": "10714000000",
+        "relative_error": null,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-24-000013::item8::c13"
+          "0000021344-24-000009::item8::c1",
+          "0000021344-24-000009::item8::c2",
+          "0000021344-24-000009::item8::c6",
+          "0000021344-24-000009::item8::c172",
+          "0000021344-24-000009::item8::c174",
+          "0000021344-24-000009::item8::c180",
+          "0000021344-24-000009::item8::c182",
+          "0000021344-24-000009::item15::c3"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "model declined to answer"
       },
       {
         "field": "total_assets",
-        "verdict": "wrong",
-        "extracted": "167558000000",
-        "truth": "187378000000",
-        "relative_error": 0.10577549125297526,
+        "verdict": "abstained",
+        "extracted": null,
+        "truth": "97703000000",
+        "relative_error": null,
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-24-000013::item8::c4"
+          "0000021344-24-000009::item8::c1",
+          "0000021344-24-000009::item8::c2",
+          "0000021344-24-000009::item8::c6",
+          "0000021344-24-000009::item8::c172",
+          "0000021344-24-000009::item8::c174",
+          "0000021344-24-000009::item8::c180",
+          "0000021344-24-000009::item8::c182",
+          "0000021344-24-000009::item15::c3"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "model declined to answer"
       },
       {
         "field": "operating_cash_flow",
-        "verdict": "wrong",
-        "extracted": "22791000000",
-        "truth": "21194000000",
-        "relative_error": 0.075351514579598,
+        "verdict": "abstained",
+        "extracted": null,
+        "truth": "11599000000",
+        "relative_error": null,
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-24-000013::item8::c13"
+          "0000021344-24-000009::item8::c1",
+          "0000021344-24-000009::item8::c2",
+          "0000021344-24-000009::item8::c6",
+          "0000021344-24-000009::item8::c172",
+          "0000021344-24-000009::item8::c174",
+          "0000021344-24-000009::item8::c180",
+          "0000021344-24-000009::item8::c182",
+          "0000021344-24-000009::item15::c3"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "model declined to answer"
       }
     ]
   },
@@ -929,7 +773,7 @@
     "company": "NVIDIA CORP",
     "form": "10-K",
     "fiscal_year": 2024,
-    "model": "gemini-3.5-flash",
+    "model": "openai/gpt-oss-120b",
     "accuracy": 1.0,
     "scores": [
       {
@@ -941,7 +785,7 @@
         "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
-          "0001045810-24-000029::item15::c104"
+          "0001045810-24-000029::item15::c107"
         ],
         "note": ""
       },
@@ -954,7 +798,7 @@
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0001045810-24-000029::item15::c13"
+          "0001045810-24-000029::item15::c9"
         ],
         "note": ""
       },
@@ -980,8 +824,7 @@
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0001045810-24-000029::item7::c29",
-          "0001045810-24-000029::item15::c13"
+          "0001045810-24-000029::item7::c29"
         ],
         "note": ""
       }
@@ -993,34 +836,34 @@
     "company": "CHEVRON CORP",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
-    "accuracy": 1.0,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 0.5,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "exact",
-        "extracted": "196913000000",
+        "verdict": "wrong",
+        "extracted": "48933000000",
         "truth": "196913000000",
-        "relative_error": 0.0,
+        "relative_error": 0.751499393133008,
         "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
         "scale_factor": null,
         "source_chunks": [
-          "0000093410-24-000013::item14::c104"
+          "0000093410-24-000013::item14::c100"
         ],
-        "note": ""
+        "note": "wrong line item or wrong period"
       },
       {
         "field": "net_income",
-        "verdict": "exact",
-        "extracted": "21369000000",
+        "verdict": "wrong",
+        "extracted": "2259000000",
         "truth": "21369000000",
-        "relative_error": 0.0,
+        "relative_error": 0.8942861154008143,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000093410-24-000013::item14::c104"
+          "0000093410-24-000013::item14::c100"
         ],
-        "note": ""
+        "note": "wrong line item or wrong period"
       },
       {
         "field": "total_assets",
@@ -1031,7 +874,6 @@
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000093410-24-000013::item14::c106",
           "0000093410-24-000013::item14::c161"
         ],
         "note": ""
@@ -1058,23 +900,21 @@
     "company": "EXXON MOBIL CORP",
     "form": "10-K",
     "fiscal_year": 2023,
-    "model": "gemini-3.5-flash",
-    "accuracy": 0.75,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "wrong",
-        "extracted": "334697000000",
+        "verdict": "exact",
+        "extracted": "344582000000",
         "truth": "344582000000",
-        "relative_error": 0.02868693083213865,
+        "relative_error": 0.0,
         "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
-          "0000034088-24-000018::item16::c4",
-          "0000034088-24-000018::item16::c128",
-          "0000034088-24-000018::item16::c221"
+          "0000034088-24-000018::item16::c128"
         ],
-        "note": "wrong line item or wrong period"
+        "note": ""
       },
       {
         "field": "net_income",
@@ -1085,7 +925,6 @@
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000034088-24-000018::item16::c4",
           "0000034088-24-000018::item16::c128"
         ],
         "note": ""
@@ -1099,8 +938,7 @@
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000034088-24-000018::item16::c4",
-          "0000034088-24-000018::item16::c221"
+          "0000034088-24-000018::item16::c130"
         ],
         "note": ""
       },
@@ -1113,8 +951,501 @@
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000034088-24-000018::item16::c6",
-          "0000034088-24-000018::item16::c131"
+          "0000034088-24-000018::item16::c6"
+        ],
+        "note": ""
+      }
+    ]
+  },
+  {
+    "accession": "0000731766-24-000081",
+    "cik": "0000731766",
+    "company": "UNITEDHEALTH GROUP INC",
+    "form": "10-K",
+    "fiscal_year": 2023,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 0.75,
+    "scores": [
+      {
+        "field": "total_revenue",
+        "verdict": "exact",
+        "extracted": "371622000000",
+        "truth": "371622000000",
+        "relative_error": 0.0,
+        "tag": "Revenues",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000731766-24-000081::item8::c89"
+        ],
+        "note": ""
+      },
+      {
+        "field": "net_income",
+        "verdict": "wrong",
+        "extracted": "23144000000",
+        "truth": "22381000000",
+        "relative_error": 0.03409141682677271,
+        "tag": "NetIncomeLoss",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000731766-24-000081::item8::c11"
+        ],
+        "note": "wrong line item or wrong period"
+      },
+      {
+        "field": "total_assets",
+        "verdict": "exact",
+        "extracted": "273720000000",
+        "truth": "273720000000",
+        "relative_error": 0.0,
+        "tag": "Assets",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000731766-24-000081::item8::c89"
+        ],
+        "note": ""
+      },
+      {
+        "field": "operating_cash_flow",
+        "verdict": "exact",
+        "extracted": "29068000000",
+        "truth": "29068000000",
+        "relative_error": 0.0,
+        "tag": "NetCashProvidedByUsedInOperatingActivities",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000731766-24-000081::item7::c15"
+        ],
+        "note": ""
+      }
+    ]
+  },
+  {
+    "accession": "0000354950-24-000062",
+    "cik": "0000354950",
+    "company": "HOME DEPOT, INC.",
+    "form": "10-K",
+    "fiscal_year": 2024,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 0.0,
+    "scores": [
+      {
+        "field": "total_revenue",
+        "verdict": "abstained",
+        "extracted": null,
+        "truth": "152669000000",
+        "relative_error": null,
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000354950-24-000062::item7::c2",
+          "0000354950-24-000062::item7::c4",
+          "0000354950-24-000062::item7::c5",
+          "0000354950-24-000062::item7::c13",
+          "0000354950-24-000062::item8::c1",
+          "0000354950-24-000062::item8::c9",
+          "0000354950-24-000062::item8::c17",
+          "0000354950-24-000062::item8::c52",
+          "0000354950-24-000062::item8::c57",
+          "0000354950-24-000062::item8::c63",
+          "0000354950-24-000062::item8::c65",
+          "0000354950-24-000062::item8::c75",
+          "0000354950-24-000062::item8::c102",
+          "0000354950-24-000062::item8::c107"
+        ],
+        "note": "model declined to answer"
+      },
+      {
+        "field": "net_income",
+        "verdict": "abstained",
+        "extracted": null,
+        "truth": "15143000000",
+        "relative_error": null,
+        "tag": "NetIncomeLoss",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000354950-24-000062::item7::c2",
+          "0000354950-24-000062::item7::c4",
+          "0000354950-24-000062::item7::c5",
+          "0000354950-24-000062::item7::c13",
+          "0000354950-24-000062::item8::c1",
+          "0000354950-24-000062::item8::c9",
+          "0000354950-24-000062::item8::c17",
+          "0000354950-24-000062::item8::c52",
+          "0000354950-24-000062::item8::c57",
+          "0000354950-24-000062::item8::c63",
+          "0000354950-24-000062::item8::c65",
+          "0000354950-24-000062::item8::c75",
+          "0000354950-24-000062::item8::c102",
+          "0000354950-24-000062::item8::c107"
+        ],
+        "note": "model declined to answer"
+      },
+      {
+        "field": "total_assets",
+        "verdict": "abstained",
+        "extracted": null,
+        "truth": "76530000000",
+        "relative_error": null,
+        "tag": "Assets",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000354950-24-000062::item7::c2",
+          "0000354950-24-000062::item7::c4",
+          "0000354950-24-000062::item7::c5",
+          "0000354950-24-000062::item7::c13",
+          "0000354950-24-000062::item8::c1",
+          "0000354950-24-000062::item8::c9",
+          "0000354950-24-000062::item8::c17",
+          "0000354950-24-000062::item8::c52",
+          "0000354950-24-000062::item8::c57",
+          "0000354950-24-000062::item8::c63",
+          "0000354950-24-000062::item8::c65",
+          "0000354950-24-000062::item8::c75",
+          "0000354950-24-000062::item8::c102",
+          "0000354950-24-000062::item8::c107"
+        ],
+        "note": "model declined to answer"
+      },
+      {
+        "field": "operating_cash_flow",
+        "verdict": "abstained",
+        "extracted": null,
+        "truth": "21172000000",
+        "relative_error": null,
+        "tag": "NetCashProvidedByUsedInOperatingActivities",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000354950-24-000062::item7::c2",
+          "0000354950-24-000062::item7::c4",
+          "0000354950-24-000062::item7::c5",
+          "0000354950-24-000062::item7::c13",
+          "0000354950-24-000062::item8::c1",
+          "0000354950-24-000062::item8::c9",
+          "0000354950-24-000062::item8::c17",
+          "0000354950-24-000062::item8::c52",
+          "0000354950-24-000062::item8::c57",
+          "0000354950-24-000062::item8::c63",
+          "0000354950-24-000062::item8::c65",
+          "0000354950-24-000062::item8::c75",
+          "0000354950-24-000062::item8::c102",
+          "0000354950-24-000062::item8::c107"
+        ],
+        "note": "model declined to answer"
+      }
+    ]
+  },
+  {
+    "accession": "0000104169-24-000056",
+    "cik": "0000104169",
+    "company": "Walmart Inc.",
+    "form": "10-K",
+    "fiscal_year": 2024,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 0.5,
+    "scores": [
+      {
+        "field": "total_revenue",
+        "verdict": "wrong",
+        "extracted": "648125000000",
+        "truth": "642637000000",
+        "relative_error": 0.008539813300510242,
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000104169-24-000056::item7::c25"
+        ],
+        "note": "wrong line item or wrong period"
+      },
+      {
+        "field": "net_income",
+        "verdict": "wrong",
+        "extracted": "16270000000",
+        "truth": "15511000000",
+        "relative_error": 0.04893301527947908,
+        "tag": "NetIncomeLoss",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000104169-24-000056::item8::c26"
+        ],
+        "note": "wrong line item or wrong period"
+      },
+      {
+        "field": "total_assets",
+        "verdict": "exact",
+        "extracted": "252399000000",
+        "truth": "252399000000",
+        "relative_error": 0.0,
+        "tag": "Assets",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000104169-24-000056::item7::c17"
+        ],
+        "note": ""
+      },
+      {
+        "field": "operating_cash_flow",
+        "verdict": "exact",
+        "extracted": "35726000000",
+        "truth": "35726000000",
+        "relative_error": 0.0,
+        "tag": "NetCashProvidedByUsedInOperatingActivities",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000104169-24-000056::item7::c23"
+        ],
+        "note": ""
+      }
+    ]
+  },
+  {
+    "accession": "0000950170-24-075605",
+    "cik": "0001341439",
+    "company": "ORACLE CORP",
+    "form": "10-K",
+    "fiscal_year": 2024,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 1.0,
+    "scores": [
+      {
+        "field": "total_revenue",
+        "verdict": "exact",
+        "extracted": "52961000000",
+        "truth": "52961000000",
+        "relative_error": 0.0,
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000950170-24-075605::item15::c11"
+        ],
+        "note": ""
+      },
+      {
+        "field": "net_income",
+        "verdict": "exact",
+        "extracted": "10467000000",
+        "truth": "10467000000",
+        "relative_error": 0.0,
+        "tag": "NetIncomeLoss",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000950170-24-075605::item15::c11"
+        ],
+        "note": ""
+      },
+      {
+        "field": "total_assets",
+        "verdict": "exact",
+        "extracted": "140976000000",
+        "truth": "140976000000",
+        "relative_error": 0.0,
+        "tag": "Assets",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000950170-24-075605::item15::c9"
+        ],
+        "note": ""
+      },
+      {
+        "field": "operating_cash_flow",
+        "verdict": "exact",
+        "extracted": "18673000000",
+        "truth": "18673000000",
+        "relative_error": 0.0,
+        "tag": "NetCashProvidedByUsedInOperatingActivities",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000950170-24-075605::item15::c17"
+        ],
+        "note": ""
+      }
+    ]
+  },
+  {
+    "accession": "0000950170-24-087843",
+    "cik": "0000789019",
+    "company": "MICROSOFT CORP",
+    "form": "10-K",
+    "fiscal_year": 2024,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 1.0,
+    "scores": [
+      {
+        "field": "total_revenue",
+        "verdict": "exact",
+        "extracted": "245122000000",
+        "truth": "245122000000",
+        "relative_error": 0.0,
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000950170-24-087843::item8::c1"
+        ],
+        "note": ""
+      },
+      {
+        "field": "net_income",
+        "verdict": "exact",
+        "extracted": "88136000000",
+        "truth": "88136000000",
+        "relative_error": 0.0,
+        "tag": "NetIncomeLoss",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000950170-24-087843::item8::c1"
+        ],
+        "note": ""
+      },
+      {
+        "field": "total_assets",
+        "verdict": "exact",
+        "extracted": "512163000000",
+        "truth": "512163000000",
+        "relative_error": 0.0,
+        "tag": "Assets",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000950170-24-087843::item8::c3"
+        ],
+        "note": ""
+      },
+      {
+        "field": "operating_cash_flow",
+        "verdict": "exact",
+        "extracted": "118548000000",
+        "truth": "118548000000",
+        "relative_error": 0.0,
+        "tag": "NetCashProvidedByUsedInOperatingActivities",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000950170-24-087843::item8::c4"
+        ],
+        "note": ""
+      }
+    ]
+  },
+  {
+    "accession": "0000080424-24-000083",
+    "cik": "0000080424",
+    "company": "PROCTER & GAMBLE Co",
+    "form": "10-K",
+    "fiscal_year": 2024,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 0.75,
+    "scores": [
+      {
+        "field": "total_revenue",
+        "verdict": "exact",
+        "extracted": "84039000000",
+        "truth": "84039000000",
+        "relative_error": 0.0,
+        "tag": "Revenues",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000080424-24-000083::item8::c13"
+        ],
+        "note": ""
+      },
+      {
+        "field": "net_income",
+        "verdict": "wrong",
+        "extracted": "14974000000",
+        "truth": "14879000000",
+        "relative_error": 0.00638483769070502,
+        "tag": "NetIncomeLoss",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000080424-24-000083::item8::c13"
+        ],
+        "note": "wrong line item or wrong period"
+      },
+      {
+        "field": "total_assets",
+        "verdict": "exact",
+        "extracted": "122370000000",
+        "truth": "122370000000",
+        "relative_error": 0.0,
+        "tag": "Assets",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000080424-24-000083::item8::c16"
+        ],
+        "note": ""
+      },
+      {
+        "field": "operating_cash_flow",
+        "verdict": "exact",
+        "extracted": "19846000000",
+        "truth": "19846000000",
+        "relative_error": 0.0,
+        "tag": "NetCashProvidedByUsedInOperatingActivities",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000080424-24-000083::item7::c17",
+          "0000080424-24-000083::item8::c18"
+        ],
+        "note": ""
+      }
+    ]
+  },
+  {
+    "accession": "0000320193-24-000123",
+    "cik": "0000320193",
+    "company": "Apple Inc.",
+    "form": "10-K",
+    "fiscal_year": 2024,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 1.0,
+    "scores": [
+      {
+        "field": "total_revenue",
+        "verdict": "exact",
+        "extracted": "391035000000",
+        "truth": "391035000000",
+        "relative_error": 0.0,
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000320193-24-000123::item8::c3"
+        ],
+        "note": ""
+      },
+      {
+        "field": "net_income",
+        "verdict": "exact",
+        "extracted": "93736000000",
+        "truth": "93736000000",
+        "relative_error": 0.0,
+        "tag": "NetIncomeLoss",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000320193-24-000123::item8::c3"
+        ],
+        "note": ""
+      },
+      {
+        "field": "total_assets",
+        "verdict": "exact",
+        "extracted": "364980000000",
+        "truth": "364980000000",
+        "relative_error": 0.0,
+        "tag": "Assets",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000320193-24-000123::item8::c7"
+        ],
+        "note": ""
+      },
+      {
+        "field": "operating_cash_flow",
+        "verdict": "exact",
+        "extracted": "118254000000",
+        "truth": "118254000000",
+        "relative_error": 0.0,
+        "tag": "NetCashProvidedByUsedInOperatingActivities",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000320193-24-000123::item8::c11"
         ],
         "note": ""
       }

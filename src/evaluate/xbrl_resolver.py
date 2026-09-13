@@ -39,6 +39,24 @@ import yaml
 
 from src.config.settings import get_settings
 
+# A 52/53-week fiscal year ends on a fixed weekday near the calendar year end,
+# so it lands in early January roughly two years in five. Johnson & Johnson's
+# fiscal 2022 ended on 1 January 2023.
+#
+# Keying the fiscal year on the calendar year the period ENDS in is correct for
+# every other filer and wrong for exactly these: it assigned FY2023 to both of
+# J&J's filings, so each was scored against the other's figures and the answer
+# key was silently off by a year for both. Nothing failed; the numbers were just
+# wrong.
+EARLY_JANUARY_CUTOFF = 14
+
+
+def fiscal_year_of(period_end: date) -> int:
+    """The fiscal year a period belongs to, not merely the year it ends in."""
+    if period_end.month == 1 and period_end.day <= EARLY_JANUARY_CUTOFF:
+        return period_end.year - 1
+    return period_end.year
+
 
 class UnresolvableError(LookupError):
     """No XBRL fact could be found for this field and fiscal year."""
@@ -138,11 +156,16 @@ class XBRLResolver:
         for unit in spec.units:
             for obs in entry.get("units", {}).get(unit, []):
                 end = _parse_date(obs.get("end"))
-                if end is None or end.year != fiscal_year:
-                    # A fiscal year is identified by the calendar year its period
-                    # ENDS in, not by the `fy` field. `fy` describes the filing
-                    # the fact appeared in, so a FY2022 comparative sitting in a
-                    # FY2024 10-K carries fy=2024 and would be misfiled by it.
+                if end is None or fiscal_year_of(end) != fiscal_year:
+                    # Two separate traps here.
+                    #
+                    # The `fy` field describes the FILING a fact appeared in, not
+                    # the period the fact covers, so a FY2022 comparative sitting
+                    # in a FY2024 10-K carries fy=2024 and would be misfiled by it.
+                    # The period end date is the reliable signal.
+                    #
+                    # And the end date needs interpreting rather than reading:
+                    # a 52/53-week year ending 1 January 2023 is fiscal 2022.
                     continue
 
                 start = _parse_date(obs.get("start"))
@@ -237,7 +260,7 @@ class XBRLResolver:
                     # Annual durations and the balance-sheet date both point at
                     # the same year; quarterly facts in the same filing do not.
                     if start is None or self._is_annual(start, end):
-                        years[end.year] += 1
+                        years[fiscal_year_of(end)] += 1
         return years.most_common(1)[0][0] if years else fallback
 
     def resolve_candidates(

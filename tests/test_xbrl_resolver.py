@@ -271,3 +271,65 @@ def test_loads_the_shipped_tag_map() -> None:
     # Revenue needs several tags; one alone resolves about half the corpus.
     assert len(loaded.fields["total_revenue"].tags) >= 4
     assert loaded.min_annual_days < 365 < loaded.max_annual_days
+
+
+# --- 52/53-week fiscal years ----------------------------------------------
+def test_a_year_ending_in_early_january_belongs_to_the_previous_year() -> None:
+    """Regression, and the most expensive bug in this project so far.
+
+    A 52/53-week fiscal year ends on a fixed weekday near the calendar year end,
+    so it lands in early January roughly two years in five. Johnson & Johnson's
+    fiscal 2022 ended on 1 January 2023.
+
+    Keying the fiscal year on the calendar year the period ENDS in assigned
+    FY2023 to both of J&J's filings. Each was then scored against the other's
+    figures, so the answer key was silently off by a year and marked a CORRECT
+    model wrong. Nothing failed; the numbers were just wrong.
+    """
+    from src.evaluate.xbrl_resolver import fiscal_year_of
+
+    assert fiscal_year_of(date(2023, 1, 1)) == 2022
+
+
+@pytest.mark.parametrize(
+    ("period_end", "expected"),
+    [
+        (date(2023, 12, 31), 2023),  # calendar-year filer
+        (date(2023, 9, 30), 2023),  # Apple, September year end
+        (date(2023, 1, 1), 2022),  # J&J, 52/53-week year ending new year's day
+        (date(2023, 1, 2), 2022),
+        (date(2024, 1, 28), 2024),  # NVIDIA labels this fiscal 2024
+        (date(2024, 1, 31), 2024),  # Walmart labels this fiscal 2024
+    ],
+)
+def test_fiscal_year_of_period_end(period_end: date, expected: int) -> None:
+    """The cutoff is deliberately narrow.
+
+    Filers with late-January year ends disagree among themselves - NVIDIA calls
+    a year ending 28 January 2024 "fiscal 2024" while a retailer calls the same
+    dates "fiscal 2023" - so no universal rule exists. Scoring stays internally
+    consistent because the fiscal year is derived from the filing's own facts,
+    and the cutoff only rescues the unambiguous early-January case.
+    """
+    from src.evaluate.xbrl_resolver import fiscal_year_of
+
+    assert fiscal_year_of(period_end) == expected
+
+
+def test_two_filings_of_a_52_week_filer_get_different_fiscal_years(
+    resolver: XBRLResolver,
+) -> None:
+    """The symptom that exposed the bug: two filings collapsing onto one year."""
+    f = facts(
+        {
+            "Revenues": [
+                obs(94943, start="2022-01-03", end="2023-01-01", accn="A", filed="2023-02-16"),
+                obs(85159, start="2023-01-02", end="2023-12-31", accn="B", filed="2024-02-16"),
+            ]
+        }
+    )
+
+    assert resolver.fiscal_year_for_accession(f, "A", 0) == 2022
+    assert resolver.fiscal_year_for_accession(f, "B", 0) == 2023
+    assert resolver.resolve_field(f, "total_revenue", 2022).value == Decimal("94943")
+    assert resolver.resolve_field(f, "total_revenue", 2023).value == Decimal("85159")

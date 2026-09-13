@@ -1,111 +1,67 @@
 [
   {
-    "accession": "0000200406-23-000016",
-    "cik": "0000200406",
-    "company": "JOHNSON & JOHNSON",
+    "accession": "0000021344-23-000011",
+    "cik": "0000021344",
+    "company": "COCA COLA CO",
     "form": "10-K",
-    "fiscal_year": 2023,
+    "fiscal_year": 2022,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.0,
+    "accuracy": 0.75,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "abstained",
-        "extracted": null,
-        "truth": "94943000000",
-        "relative_error": null,
-        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "verdict": "exact",
+        "extracted": "43004000000",
+        "truth": "43004000000",
+        "relative_error": 0.0,
+        "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-23-000016::item7::c30",
-          "0000200406-23-000016::item7::c43",
-          "0000200406-23-000016::item7::c47",
-          "0000200406-23-000016::item8::c1",
-          "0000200406-23-000016::item8::c4",
-          "0000200406-23-000016::item8::c11",
-          "0000200406-23-000016::item8::c13",
-          "0000200406-23-000016::item8::c29",
-          "0000200406-23-000016::item8::c65",
-          "0000200406-23-000016::item8::c131",
-          "0000200406-23-000016::item8::c140",
-          "0000200406-23-000016::item15::c1"
+          "0000021344-23-000011::item8::c2"
         ],
-        "note": "model declined to answer",
+        "note": "",
         "matched_alternative": false
       },
       {
         "field": "net_income",
-        "verdict": "abstained",
-        "extracted": null,
-        "truth": "17941000000",
-        "relative_error": null,
+        "verdict": "within_tolerance",
+        "extracted": "9571000000",
+        "truth": "9542000000",
+        "relative_error": 0.0030391951372877803,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-23-000016::item7::c30",
-          "0000200406-23-000016::item7::c43",
-          "0000200406-23-000016::item7::c47",
-          "0000200406-23-000016::item8::c1",
-          "0000200406-23-000016::item8::c4",
-          "0000200406-23-000016::item8::c11",
-          "0000200406-23-000016::item8::c13",
-          "0000200406-23-000016::item8::c29",
-          "0000200406-23-000016::item8::c65",
-          "0000200406-23-000016::item8::c131",
-          "0000200406-23-000016::item8::c140",
-          "0000200406-23-000016::item15::c1"
+          "0000021344-23-000011::item8::c2"
         ],
-        "note": "model declined to answer",
+        "note": "within 0.50%",
         "matched_alternative": false
       },
       {
         "field": "total_assets",
-        "verdict": "abstained",
-        "extracted": null,
-        "truth": "187378000000",
-        "relative_error": null,
+        "verdict": "wrong",
+        "extracted": "103245000000",
+        "truth": "92763000000",
+        "relative_error": 0.1129976391449177,
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-23-000016::item7::c30",
-          "0000200406-23-000016::item7::c43",
-          "0000200406-23-000016::item7::c47",
-          "0000200406-23-000016::item8::c1",
-          "0000200406-23-000016::item8::c4",
-          "0000200406-23-000016::item8::c11",
-          "0000200406-23-000016::item8::c13",
-          "0000200406-23-000016::item8::c29",
-          "0000200406-23-000016::item8::c65",
-          "0000200406-23-000016::item8::c131",
-          "0000200406-23-000016::item8::c140",
-          "0000200406-23-000016::item15::c1"
+          "0000021344-23-000011::item8::c84"
         ],
-        "note": "model declined to answer",
+        "note": "wrong line item or wrong period",
         "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
-        "verdict": "abstained",
-        "extracted": null,
-        "truth": "21194000000",
-        "relative_error": null,
+        "verdict": "exact",
+        "extracted": "11018000000",
+        "truth": "11018000000",
+        "relative_error": 0.0,
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
-          "0000200406-23-000016::item7::c30",
-          "0000200406-23-000016::item7::c43",
-          "0000200406-23-000016::item7::c47",
-          "0000200406-23-000016::item8::c1",
-          "0000200406-23-000016::item8::c4",
-          "0000200406-23-000016::item8::c11",
-          "0000200406-23-000016::item8::c13",
-          "0000200406-23-000016::item8::c29",
-          "0000200406-23-000016::item8::c65",
-          "0000200406-23-000016::item8::c131",
-          "0000200406-23-000016::item8::c140",
-          "0000200406-23-000016::item15::c1"
+          "0000021344-23-000011::item8::c6"
         ],
-        "note": "model declined to answer",
+        "note": "",
         "matched_alternative": false
       }
     ]
@@ -723,62 +679,62 @@
     "form": "10-K",
     "fiscal_year": 2023,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.0,
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "85159000000",
-        "truth": "79990000000",
-        "relative_error": 0.06462057757219652,
+        "truth": "85159000000",
+        "relative_error": 0.0,
         "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
         "scale_factor": null,
         "source_chunks": [
           "0000200406-24-000013::item8::c6"
         ],
-        "note": "wrong line item or wrong period",
+        "note": "",
         "matched_alternative": false
       },
       {
         "field": "net_income",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "35153000000",
-        "truth": "17941000000",
-        "relative_error": 0.9593668134440667,
+        "truth": "35153000000",
+        "relative_error": 0.0,
         "tag": "NetIncomeLoss",
         "scale_factor": null,
         "source_chunks": [
           "0000200406-24-000013::item8::c6"
         ],
-        "note": "wrong line item or wrong period",
+        "note": "",
         "matched_alternative": false
       },
       {
         "field": "total_assets",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "167558000000",
-        "truth": "187378000000",
-        "relative_error": 0.10577549125297526,
+        "truth": "167558000000",
+        "relative_error": 0.0,
         "tag": "Assets",
         "scale_factor": null,
         "source_chunks": [
           "0000200406-24-000013::item8::c4"
         ],
-        "note": "wrong line item or wrong period",
+        "note": "",
         "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "22791000000",
-        "truth": "21194000000",
-        "relative_error": 0.075351514579598,
+        "truth": "22791000000",
+        "relative_error": 0.0,
         "tag": "NetCashProvidedByUsedInOperatingActivities",
         "scale_factor": null,
         "source_chunks": [
           "0000200406-24-000013::item8::c13"
         ],
-        "note": "wrong line item or wrong period",
+        "note": "",
         "matched_alternative": false
       }
     ]

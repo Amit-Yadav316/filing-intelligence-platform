@@ -73,18 +73,18 @@ What the API actually does when the caller names a company. The candidate set is
 
 ## Extraction accuracy
 
-_Generated 2026-09-13T18:30:36+00:00 - 22 filings, openai/gpt-oss-120b, 14 retrieved chunks per filing, $0.0000 total._
+_Generated 2026-09-13T18:43:31+00:00 - 22 filings, openai/gpt-oss-120b, 14 retrieved chunks per filing, $0.0000 total._
 
 Every figure below is scored against the XBRL fact the SEC published in the same filing. `unresolvable` means no XBRL fact could be resolved to compare against; those cases are excluded from the accuracy denominator and shown separately rather than quietly dropped.
 
 | Field | Exact | Within 0.5% | Scale error | Wrong | Hallucinated | Abstained | **Accuracy** | **When answered** | Unresolvable |
 |---|---|---|---|---|---|---|---|---|---|
-| `total_revenue` | 17 | 0 | 0 | 2 | 0 | 3 | **77.3%** | **89.5%** | 0 |
-| `net_income` | 16 | 1 | 0 | 2 | 0 | 3 | **77.3%** | **89.5%** | 0 |
-| `total_assets` | 17 | 0 | 0 | 2 | 0 | 3 | **77.3%** | **89.5%** | 0 |
-| `operating_cash_flow` | 18 | 0 | 0 | 1 | 0 | 3 | **81.8%** | **94.7%** | 0 |
+| `total_revenue` | 19 | 0 | 0 | 1 | 0 | 2 | **86.4%** | **95.0%** | 0 |
+| `net_income` | 17 | 2 | 0 | 1 | 0 | 2 | **86.4%** | **95.0%** | 0 |
+| `total_assets` | 18 | 0 | 0 | 2 | 0 | 2 | **81.8%** | **90.0%** | 0 |
+| `operating_cash_flow` | 20 | 0 | 0 | 0 | 0 | 2 | **90.9%** | **100.0%** | 0 |
 
-**Overall: 69/88 scoreable field extractions correct (78.4%)** across 22 filings.
+**Overall: 76/88 scoreable field extractions correct (86.4%)** across 22 filings.
 
 **Accuracy and 'when answered' are two different questions, and the gap between them is the finding.** Overall accuracy counts an abstention as not-correct, because a model that abstains on everything is useless. 'When answered' excludes abstentions and asks the different question: when this model does commit to a figure, how often is it right? A large gap means the model is precise but under-served by retrieval - the fix is the context, not the model. A small gap with low accuracy would mean the opposite.
 
@@ -94,20 +94,17 @@ Attributed by the chunks the model cited for each field, so this is measured fro
 
 | Source | Correct | Total | Accuracy |
 |---|---|---|---|
-| Table | 69 | 88 | 78.4% |
+| Table | 76 | 88 | 86.4% |
 
 ### Failure taxonomy
 
 | Failure mode | Count | What it means |
 |---|---|---|
-| `wrong` | 7 | A different figure of the same magnitude - wrong line item or the prior-year comparative column. |
+| `wrong` | 4 | A different figure of the same magnitude - wrong line item or the prior-year comparative column. |
 
 Worst cases:
 
+- `total_assets` in COCA COLA CO 10-K (0000021344-23-000011): extracted `103245000000` against `92763000000` - wrong line item or wrong period
 - `total_assets` in UNITEDHEALTH GROUP INC 10-K (0000731766-23-000008): extracted `144286000000` against `245705000000` - wrong line item or wrong period
-- `total_revenue` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `85159000000` against `79990000000` - wrong line item or wrong period
-- `net_income` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `35153000000` against `17941000000` - wrong line item or wrong period
-- `total_assets` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `167558000000` against `187378000000` - wrong line item or wrong period
-- `operating_cash_flow` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `22791000000` against `21194000000` - wrong line item or wrong period
 - `total_revenue` in CHEVRON CORP 10-K (0000093410-24-000013): extracted `48933000000` against `196913000000` - wrong line item or wrong period
 - `net_income` in CHEVRON CORP 10-K (0000093410-24-000013): extracted `2259000000` against `21369000000` - wrong line item or wrong period

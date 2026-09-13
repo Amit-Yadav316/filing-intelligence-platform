@@ -29,82 +29,86 @@ against the XBRL facts the SEC published in the same filings.
 
 | Field | Exact | Within 0.5% | Scale error | Wrong | Hallucinated | Abstained | Accuracy | **When answered** |
 |---|---|---|---|---|---|---|---|---|
-| `operating_cash_flow` | 18 | 0 | 0 | 1 | 0 | 3 | **81.8%** | **94.7%** |
-| `total_revenue` | 17 | 0 | 0 | 2 | 0 | 3 | **77.3%** | **89.5%** |
-| `total_assets` | 17 | 0 | 0 | 2 | 0 | 3 | **77.3%** | **89.5%** |
-| `net_income` | 16 | 1 | 0 | 2 | 0 | 3 | **77.3%** | **89.5%** |
+| `operating_cash_flow` | 20 | 0 | 0 | 0 | 0 | 2 | **90.9%** | **100.0%** |
+| `total_revenue` | 19 | 0 | 0 | 1 | 0 | 2 | **86.4%** | **95.0%** |
+| `net_income` | 17 | 2 | 0 | 1 | 0 | 2 | **86.4%** | **95.0%** |
+| `total_assets` | 18 | 0 | 0 | 2 | 0 | 2 | **81.8%** | **90.0%** |
 
-**Overall: 69 of 88 scoreable extractions correct (78.4%). Zero hallucinations.
+**Overall: 76 of 88 scoreable extractions correct (86.4%). Zero hallucinations.
 Zero scale errors.**
 
 ### How it got here, which matters more than the number
 
-Three measured steps, each diagnosed **before** it was attempted, and two of the
-three verified without spending a single LLM call:
+Four measured steps. **Three of the four were verified without spending a single
+LLM call**, and every one was diagnosed before it was attempted:
 
 | | Overall | What changed | How it was found |
 |---|---|---|---|
 | First run | 55.4% | — | — |
-| | 72.6% | Retrieval + prompt | A no-LLM diagnostic showed the figure was **already in context for 67% of abstentions** — the model had the number and declined. Separately, `websearch_to_tsquery` ANDs bare terms, so three of four lexical anchors returned **zero rows** for a filer whose wording differed |
-| | **78.4%** | Evaluator accepts near-synonymous concepts | For each wrong answer, searched the filer's own XBRL for a tag whose value the model actually reported. **Ten of eleven** were explained by a different concept the tag map already declared for that field |
+| | 72.6% | Retrieval + prompt | A no-LLM diagnostic showed the figure was **already in context for 67% of abstentions**. Separately, `websearch_to_tsquery` ANDs bare terms, so three of four lexical anchors returned **zero rows** for filers whose wording differed |
+| | 78.4% | Evaluator accepts near-synonymous concepts | For each wrong answer, searched the filer's own XBRL for a tag whose value the model actually reported. **Ten of eleven** matched a concept the tag map already declared for that field |
+| | **86.4%** | Fixed the fiscal-year rule | Two Johnson & Johnson filings resolved to the *same* fiscal year, so each was scored against the other's figures |
 
-That last step is the one worth understanding. `net_income` went from **52.4% to
-77.3%** because "net income" is genuinely two concepts — `NetIncomeLoss`
-(attributable to the parent) and `ProfitLoss` (including non-controlling
-interests). The tag map had already declared both as meaning that field; the
-resolver picked one as canonical and the evaluator was scoring the other as an
-error. It now accepts either, **records which one matched**, and flags it.
+### The last bug is the most interesting one
 
-This is deliberately not "accept any tag that happens to match". The same
-diagnostic showed UnitedHealth's `total_assets` answer coincidentally equalled its
-`Liabilities`, and a Chevron `net_income` answer equalled a debt-maturity line.
-Those remain errors. Only concepts declared for that field in advance are
-accepted — a claim made before the failures, not a rule fitted to them.
+Johnson & Johnson runs a 52/53-week fiscal year ending the Sunday nearest 31
+December, so **fiscal 2022 ended on 1 January 2023**. Keying the fiscal year on the
+calendar year a period *ends* in assigned FY2023 to both J&J filings. The answer
+key was silently off by a year, and **it marked a correct model wrong**.
 
-### Where the remaining 19 errors are
+Nothing failed. No exception, no anomaly in the logs — just two numbers that
+disagreed, in a table that said the model was at fault. It surfaced only because a
+coverage metric pointed at the wrong filings.
 
-Mostly **Johnson & Johnson around the Kenvue separation**, where continuing-operations
-and total figures genuinely differ and two readings are defensible. Plus three
-abstentions per field and one real misread (`Liabilities` read as `total_assets`).
+That is the entire argument for this project's existence: **an extraction system
+that cannot check itself cannot tell the difference between a bad model and a bad
+answer key.**
+
+### Where the remaining 12 errors are
+
+Four wrong and eight abstentions across 88 scored extractions. The wrong answers
+are concentrated in `total_assets`, including one real misread where `Liabilities`
+was reported as assets.
 
 ### Honest limits on this table
 
-- **The model's contribution is not isolated.** Provider, retrieval and prompt
+- **The model's contribution is not isolated.** Provider, retrieval and prompt all
   changed between the 55.4% and 72.6% runs. The retrieval half is independently
   verified by context coverage; the provider's share is **not**. A controlled
-  re-run on Gemini with identical retrieval was attempted and blocked by the free
-  tier's 20-requests-per-day cap.
+  Gemini re-run on identical retrieval was written, attempted, and blocked by the
+  free tier's 20-requests-per-day cap.
 - **Structured output was not enforced.** Groq's JSON mode guarantees valid JSON,
-  not schema conformance, so the schema was described in the prompt. A model judged
-  under an enforced schema is not directly comparable.
-- **22 of 23 filings.** One failed on `max_completion_tokens` before valid JSON — an
-  output-budget limit, not a model failure.
+  not schema conformance, so the schema was described in the prompt.
+- **22 of 23 filings.** One failed on `max_completion_tokens` before producing
+  valid JSON - an output-budget limit, not a model failure.
 - **Single run, temperature 0.** No self-consistency voting, no ensembling.
+- **n = 22.** Small enough that a single filing moves the headline by about a
+  point.
 
 ### Context coverage: the ceiling on accuracy
 
-Measured with **no LLM calls** — can the answer even be found in what the model saw?
+Measured with **no LLM calls** - can the answer even be found in what the model saw?
 
 | Field | Coverage |
 |---|---|
 | `operating_cash_flow` | **100%** |
 | `net_income` | 96% |
 | `total_assets` | 91% |
-| `total_revenue` | 78% |
+| `total_revenue` | 87% |
 | **Overall** | **93%** |
 
-Coverage is flat at 96% from 10 chunks to 18 — the extra six contribute nothing.
+Coverage is flat at 96% from 10 chunks to 18 - the extra six contribute nothing.
 Under Groq's 8,000 tokens-per-minute ceiling a 6,000-token cap holds 93%, and that
-three-point drop is the measured price of the free tier.
+gap is the measured price of the free tier.
 
-With coverage at 93% and accuracy at 78.4%, the remaining gap belongs to the model
-rather than to retrieval. That is a different problem from the one this started with.
+With coverage at 93% and accuracy at 86.4%, the two are now close enough that
+further gains need a better model or an enforced schema, not better retrieval.
 
 ### Prose versus tables
 
 | Source | Correct | Total | Accuracy |
 |---|---|---|---|
-| Tables | 69 | 88 | 78.4% |
+| Tables | 76 | 88 | 86.4% |
 
 Every scored figure was attributed to a **table** chunk. With per-statement retrieval
 in place the financial statements crowd narrative text out of the context entirely,
@@ -390,17 +394,13 @@ scored ones would undercut exactly that.
 
 **Done and measured:** lexical anchors fixed, index tables excluded, prompt
 rebalanced, context budgeted in tokens, 10-Q filings removed from annual scoring,
-and near-synonymous concepts accepted by the evaluator.
+near-synonymous concepts accepted, and the 52/53-week fiscal-year rule corrected.
 
 **Still open:**
 
-- **Isolate the model's contribution.** A controlled Gemini re-run on identical
-  retrieval and prompt is written and ready; it needs either a day's quota or
-  billing, about $0.10.
-- **`total_revenue` coverage at 78%** is now the weakest link in the chain, and it
-  caps what any model can score on that field.
-- **Johnson & Johnson.** Its Kenvue-separation figures need continuing-operations
-  handling in the tag map.
+- **Isolate the model's contribution.** The controlled Gemini re-run is written and
+  ready; it needs a day's quota or about $0.10 of billing.
+- **`total_assets` at 81.8%**, the weakest field, including one genuine misread.
 - **Run the DAGs.** Parse-validated in CI, never executed against a live scheduler.
 
 ## What this does not do, and why

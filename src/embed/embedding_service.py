@@ -177,10 +177,10 @@ class EmbeddingService:
                 # which is the difference between the corpus fitting in the
                 # cache and evicting itself.
                 blob = np.asarray(vector, dtype=np.float32).tobytes()
-                pipe.setex(
+                pipe.set(
                     CacheKeyBuilder.redis_key(content_hash),
-                    self.settings.redis_cache_ttl_seconds,
                     blob,
+                    ex=self.settings.redis_cache_ttl_seconds,
                 )
             pipe.execute()
         except Exception as exc:

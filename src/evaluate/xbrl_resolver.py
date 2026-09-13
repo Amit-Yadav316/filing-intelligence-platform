@@ -28,6 +28,7 @@ reported*, and accepts an ``accession`` to pin the fact to one filing exactly.
 
 from __future__ import annotations
 
+from collections import Counter
 from dataclasses import dataclass
 from datetime import date
 from decimal import Decimal
@@ -209,6 +210,35 @@ class XBRLResolver:
             f"no us-gaap tag among {spec.tags} produced an annual {field} "
             f"for fiscal year {fiscal_year}"
         )
+
+    def fiscal_year_for_accession(
+        self, facts: dict[str, Any], accession: str, fallback: int
+    ) -> int:
+        """The fiscal year a specific filing reports, read from its own facts.
+
+        Deriving it from the filing date is wrong for off-calendar filers:
+        NVIDIA's fiscal 2023 ended 29 January 2023, so a "filed before July
+        means the previous year" rule assigns it 2022 and every field then
+        scores against the wrong year's answer key.
+
+        Matching on the accession number instead asks the filing which year it
+        is about, which it knows exactly.
+        """
+        years: Counter[int] = Counter()
+        for tag_facts in facts.get("facts", {}).get(self.taxonomy, {}).values():
+            for observations in tag_facts.get("units", {}).values():
+                for obs in observations:
+                    if obs.get("accn") != accession:
+                        continue
+                    end = _parse_date(obs.get("end"))
+                    start = _parse_date(obs.get("start"))
+                    if end is None:
+                        continue
+                    # Annual durations and the balance-sheet date both point at
+                    # the same year; quarterly facts in the same filing do not.
+                    if start is None or self._is_annual(start, end):
+                        years[end.year] += 1
+        return years.most_common(1)[0][0] if years else fallback
 
     def resolve(
         self,

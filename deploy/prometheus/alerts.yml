@@ -1,0 +1,161 @@
+# Alert rules for the Filing Intelligence Platform.
+#
+# These fire on ERROR BUDGET BURN, not on instantaneous threshold breaches.
+# The difference matters: `search_latency > 800ms` fires on a single slow
+# query at 3am and trains people to ignore the alert. A burn-rate alert fires
+# when the rate of failure would exhaust the month's budget early, which is
+# the thing actually worth waking someone for.
+#
+# Each SLO gets two windows. A fast burn (14.4x over 1h) means the budget is
+# gone in about two days and pages. A slow burn (6x over 6h) means a steady
+# degradation that will exhaust the budget by month end and files a ticket.
+# Requiring a short window to confirm alongside the long one is what stops a
+# brief blip paging anyone.
+
+groups:
+  - name: slo_extraction_accuracy
+    interval: 30s
+    rules:
+      - alert: ExtractionAccuracyBelowSLO
+        # SLO: >= 90% of total_revenue extractions within tolerance.
+        expr: filing_intel_extraction_accuracy_ratio{field="total_revenue"} < 0.90
+        for: 15m
+        labels:
+          severity: page
+          slo: extraction_accuracy
+        annotations:
+          summary: "total_revenue accuracy {{ $value | humanizePercentage }}, below the 90% floor"
+          description: >-
+            The extraction quality gate blocks publication below this floor, so
+            the corpus is NOT being corrupted - but extractions have stopped
+            being written. Check whether the model, the prompt or the retrieval
+            context changed. Runbook: docs/RUNBOOK.md#llm-provider-returning-429
+          runbook: docs/RUNBOOK.md
+
+      - alert: ExtractionHallucinationSpike
+        expr: |
+          sum(rate(filing_intel_extraction_hallucinations_total[1h]))
+            /
+          sum(rate(filing_intel_extraction_scored_total[1h])) > 0.05
+        for: 30m
+        labels:
+          severity: page
+          slo: extraction_accuracy
+        annotations:
+          summary: "Hallucination rate above 5% over the last hour"
+          description: >-
+            A fabricated figure is worse than an abstention because it looks
+            like an answer. Inspect recent scorecards for the hallucinated
+            verdict and check whether retrieval is returning the wrong filing.
+
+  - name: slo_index_freshness
+    interval: 30s
+    rules:
+      - alert: IndexStale
+        # SLO: index less than 24h behind EDGAR. Budget: 1h/day.
+        expr: filing_intel_index_freshness_seconds > 86400
+        for: 10m
+        labels:
+          severity: page
+          slo: index_freshness
+        annotations:
+          summary: "Index is {{ $value | humanizeDuration }} behind EDGAR"
+          description: >-
+            Ingest or processing has stalled. Check the ingest_edgar_filings DAG
+            first, then whether EDGAR is rate-limiting.
+            Runbook: docs/RUNBOOK.md#edgar-rate-limited
+
+      - alert: IndexFreshnessBudgetBurningFast
+        # Approaching the breach rather than past it: 20h of 24h consumed.
+        expr: filing_intel_index_freshness_seconds > 72000
+        for: 30m
+        labels:
+          severity: ticket
+          slo: index_freshness
+        annotations:
+          summary: "Index freshness at {{ $value | humanizeDuration }}, 83% of budget spent"
+
+  - name: slo_search_latency
+    interval: 30s
+    rules:
+      - alert: SearchLatencyBudgetFastBurn
+        # SLO: p95 < 800ms, 5% of requests may exceed it.
+        # 14.4x burn over 1h exhausts a 30-day budget in ~2 days.
+        expr: |
+          (
+            sum(rate(filing_intel_retrieval_latency_seconds_bucket{le="0.8",mode="api"}[1h]))
+              /
+            sum(rate(filing_intel_retrieval_latency_seconds_count{mode="api"}[1h]))
+          ) < 0.28
+        for: 5m
+        labels:
+          severity: page
+          slo: search_latency
+        annotations:
+          summary: "Search latency budget burning 14x faster than sustainable"
+          description: >-
+            More than 72% of requests are exceeding 800ms. Check pgvector index
+            health and whether the embedding model is being reloaded per request.
+
+      - alert: SearchLatencyBudgetSlowBurn
+        expr: |
+          (
+            sum(rate(filing_intel_retrieval_latency_seconds_bucket{le="0.8",mode="api"}[6h]))
+              /
+            sum(rate(filing_intel_retrieval_latency_seconds_count{mode="api"}[6h]))
+          ) < 0.70
+        for: 30m
+        labels:
+          severity: ticket
+          slo: search_latency
+        annotations:
+          summary: "Search latency degrading steadily - budget exhausted by month end"
+
+  - name: pipeline_health
+    interval: 30s
+    rules:
+      - alert: PipelineTaskFailures
+        expr: increase(filing_intel_pipeline_task_failures_total[1h]) > 3
+        for: 5m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "{{ $value }} task failures in {{ $labels.dag }}.{{ $labels.task }}"
+
+      - alert: EdgarCircuitOpen
+        # 2 == open. The client has stopped calling EDGAR entirely.
+        expr: filing_intel_edgar_circuit_state == 2
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "EDGAR circuit breaker is open - no requests are being made"
+          description: >-
+            The breaker trips after consecutive failures to avoid an IP block.
+            Runbook: docs/RUNBOOK.md#edgar-rate-limited
+
+      - alert: EmbeddingCacheHitRateCollapsed
+        expr: |
+          sum(rate(filing_intel_embedding_cache_total{outcome="hit"}[30m]))
+            /
+          clamp_min(sum(rate(filing_intel_embedding_cache_total[30m])), 1) < 0.5
+        for: 20m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "Embedding cache hit rate below 50%"
+          description: >-
+            Normal steady-state is above 95%. A collapse means Redis is
+            unreachable, was flushed, or the embedding model changed - the
+            first is a cost problem, the last invalidates the index.
+
+      - alert: LLMSpendAccelerating
+        expr: increase(filing_intel_llm_cost_usd_total[1h]) > 5
+        for: 10m
+        labels:
+          severity: ticket
+        annotations:
+          summary: "LLM spend above $5/hour"
+          description: >-
+            Expected steady-state is pennies per run. Check for a retry loop or
+            an extraction cache that has stopped working.

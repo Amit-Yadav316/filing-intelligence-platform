@@ -228,7 +228,7 @@ class _FakePipe:
         self.parent = parent
         self.ops: list[tuple[str, bytes]] = []
 
-    def setex(self, key, _ttl, value):
+    def set(self, key, value, ex=None):
         self.ops.append((key, value))
 
     def execute(self):

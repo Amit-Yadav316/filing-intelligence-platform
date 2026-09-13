@@ -1,0 +1,38 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    platform: filing-intelligence
+
+rule_files:
+  - /etc/prometheus/alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  # The API exposes retrieval latency, index freshness and the live accuracy
+  # gauges.
+  - job_name: filing-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:8000"]
+        labels:
+          component: api
+
+  # Airflow tasks are batch jobs: they exit before a scrape can reach them, so
+  # they push to the gateway instead. Honouring the pushed labels matters -
+  # without it every series would be relabelled to the gateway itself and the
+  # per-DAG breakdown would collapse into one line.
+  - job_name: pushgateway
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway:9091"]
+        labels:
+          component: pipeline
+
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

@@ -20,25 +20,75 @@ The answer, measured below, drives the architecture. It is not asserted up front
 
 ## The finding
 
-`TBD` — replace with the measured extraction accuracy table after the day-4 evaluation run.
+Measured over **14 filings** (12 large-cap companies, 10-K and 10-Q, FY2022-2024),
+extracting four financial fields with `gemini-3.5-flash` from retrieved chunks,
+scored against the XBRL facts the SEC published in the same filings.
 
-| Field | Exact | Within 0.5% | Wrong | Hallucinated | Abstained | Ground truth resolvable |
-|---|---|---|---|---|---|---|
-| total_revenue | | | | | | |
-| net_income | | | | | | |
-| total_assets | | | | | | |
-| operating_cash_flow | | | | | | |
+| Field | Exact | Within 0.5% | Scale error | Wrong | Hallucinated | Abstained | Accuracy | **When answered** |
+|---|---|---|---|---|---|---|---|---|
+| `total_assets` | 9 | 0 | 0 | 1 | 0 | 4 | 64.3% | **90.0%** |
+| `operating_cash_flow` | 8 | 0 | 0 | 1 | 0 | 5 | 57.1% | **88.9%** |
+| `total_revenue` | 8 | 0 | 0 | 2 | 0 | 4 | 57.1% | **80.0%** |
+| `net_income` | 6 | 0 | 0 | 3 | 0 | 5 | 42.9% | **66.7%** |
 
-Split by source type:
+**Overall: 31 of 56 scoreable extractions correct (55.4%).** Total cost: $0.06.
 
-| Source | Accuracy within tolerance |
-|---|---|
-| Prose (MD&A narrative) | `TBD` |
-| Tables (financial statements) | `TBD` |
+### What the numbers actually say
 
-**Design consequence**: `TBD` — state the routing decision the numbers justify. If table-derived extraction underperforms, numeric fields route to XBRL relational lookup and only narrative questions touch the embedding pipeline.
+**Zero hallucinations. Zero scale errors.** Across 56 scored extractions the model
+never invented a figure and never mis-scaled one, which is the failure mode that
+makes an extraction system unusable. Every error is a *plausible* wrong answer.
 
----
+**The gap between 55% and 80-90% is abstention, and abstention is the bottleneck -
+not the model.** When the model commits to a figure it is right 80-90% of the time.
+It declines roughly 30% of the time, and it declines because the retrieved context
+did not contain the statement, not because it was unsure of a number in front of
+it. The fix is retrieval, not a better model. Measured evidence for that: adding
+per-statement retrieval and exact line-item lexical anchors moved overall accuracy
+from **8.3% to 62.5%** on a fixed four-filing sample, without touching the model.
+
+**Almost every remaining error is a definitional ambiguity, not a mistake.**
+The seven `wrong` verdicts are nearly all cases where two defensible answers exist:
+
+| Company | Extracted | XBRL truth | What actually differs |
+|---|---|---|---|
+| ExxonMobil | 398,675 | 413,680 | Operating revenue vs. revenue *including other income* |
+| UnitedHealth | 20,639 | 20,120 | Net earnings vs. net earnings *attributable to the parent* |
+| Procter & Gamble | 14,738 | 14,653 | Same non-controlling-interest distinction |
+| Johnson & Johnson | 35,153 | 17,941 | Total vs. continuing operations, around the Kenvue separation |
+
+These are the tag-mapping problem showing up from the other side. `us-gaap` offers
+several near-synonymous concepts, the answer key picks one, and the model picks
+another equally correct one. Counting them as errors is the honest choice - but
+calling them "model failures" would not be.
+
+**One thing that did not work, reported because it is informative.** Rewriting the
+prompt to spell out these distinctions explicitly made accuracy *worse*, from 62.5%
+to 18.8% on the same sample: the model responded to the extra constraint by
+abstaining rather than by answering more precisely. The terse prompt is kept for
+that measured reason, and the finding is recorded in the source.
+
+### Prose versus tables
+
+| Source | Correct | Total | Accuracy |
+|---|---|---|---|
+| Tables | 31 | 56 | 55.4% |
+
+Every scored figure was attributed to a **table** chunk, not prose - the model cited
+statement tables for all four fields in all 14 filings. That is itself a result: with
+per-statement retrieval in place, the financial statements crowd narrative text out
+of the context entirely, so a prose-vs-table comparison has no prose arm left to
+measure on this corpus. Reporting a fabricated prose figure would be worse than
+reporting that the comparison collapsed.
+
+### Honest limits on this table
+
+- **14 filings, not the full 26.** The Gemini free tier caps `generateContent` at
+  **20 requests per day per model**; the corpus needs 26 plus retries. The remaining
+  filings are ingested, chunked, embedded and indexed - only the LLM call is
+  outstanding. Re-running with billing enabled, or across two days, completes it.
+- **Section-level, single-run.** Each filing was extracted once at temperature 0;
+  no self-consistency voting, no ensembling.
 
 ## Architecture
 

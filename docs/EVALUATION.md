@@ -70,3 +70,44 @@ What the API actually does when the caller names a company. The candidate set is
 | BM25 (Postgres FTS) | 0.208 | 0.553 | 0.539 | 3 ms | 5 ms |
 | Dense (pgvector) | 0.718 | 1.000 | 0.961 | 70 ms | 85 ms |
 | **Hybrid RRF** | 0.729 | 1.000 | 0.926 | 74 ms | 89 ms |
+
+## Extraction accuracy
+
+_Generated 2026-09-13T09:59:44+00:00 - 14 filings, gemini-3.5-flash, 18 retrieved chunks per filing, $0.0000 total._
+
+Every figure below is scored against the XBRL fact the SEC published in the same filing. `unresolvable` means no XBRL fact could be resolved to compare against; those cases are excluded from the accuracy denominator and shown separately rather than quietly dropped.
+
+| Field | Exact | Within 0.5% | Scale error | Wrong | Hallucinated | Abstained | **Accuracy** | **When answered** | Unresolvable |
+|---|---|---|---|---|---|---|---|---|---|
+| `total_revenue` | 8 | 0 | 0 | 2 | 0 | 4 | **57.1%** | **80.0%** | 0 |
+| `net_income` | 6 | 0 | 0 | 3 | 0 | 5 | **42.9%** | **66.7%** | 0 |
+| `total_assets` | 9 | 0 | 0 | 1 | 0 | 4 | **64.3%** | **90.0%** | 0 |
+| `operating_cash_flow` | 8 | 0 | 0 | 1 | 0 | 5 | **57.1%** | **88.9%** | 0 |
+
+**Overall: 31/56 scoreable field extractions correct (55.4%)** across 14 filings.
+
+**Accuracy and 'when answered' are two different questions, and the gap between them is the finding.** Overall accuracy counts an abstention as not-correct, because a model that abstains on everything is useless. 'When answered' excludes abstentions and asks the different question: when this model does commit to a figure, how often is it right? A large gap means the model is precise but under-served by retrieval - the fix is the context, not the model. A small gap with low accuracy would mean the opposite.
+
+### Prose versus tables
+
+Attributed by the chunks the model cited for each field, so this is measured from the provenance chain rather than assumed.
+
+| Source | Correct | Total | Accuracy |
+|---|---|---|---|
+| Table | 31 | 56 | 55.4% |
+
+### Failure taxonomy
+
+| Failure mode | Count | What it means |
+|---|---|---|
+| `wrong` | 7 | A different figure of the same magnitude - wrong line item or the prior-year comparative column. |
+
+Worst cases:
+
+- `total_revenue` in EXXON MOBIL CORP 10-K (0000034088-23-000020): extracted `398675000000` against `413680000000` - wrong line item or wrong period
+- `net_income` in UNITEDHEALTH GROUP INC 10-K (0000731766-23-000008): extracted `20639000000` against `20120000000` - wrong line item or wrong period
+- `net_income` in PROCTER & GAMBLE Co 10-K (0000080424-23-000073): extracted `14738000000` against `14653000000` - wrong line item or wrong period
+- `net_income` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `35153000000` against `17941000000` - wrong line item or wrong period
+- `total_assets` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `167558000000` against `187378000000` - wrong line item or wrong period
+- `operating_cash_flow` in JOHNSON & JOHNSON 10-K (0000200406-24-000013): extracted `22791000000` against `21194000000` - wrong line item or wrong period
+- `total_revenue` in EXXON MOBIL CORP 10-K (0000034088-24-000018): extracted `334697000000` against `344582000000` - wrong line item or wrong period

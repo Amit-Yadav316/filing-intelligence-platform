@@ -83,13 +83,27 @@ class Settings(BaseSettings):
     retrieval_candidate_k: int = Field(default=50, gt=0, description="Per-arm depth before fusion.")
 
     # --- Extraction -------------------------------------------------------
-    llm_provider: Literal["anthropic", "openai"] = "anthropic"
+    llm_provider: Literal["gemini", "anthropic", "openai"] = "gemini"
     anthropic_api_key: SecretStr | None = None
     openai_api_key: SecretStr | None = None
-    llm_model: str = "claude-sonnet-5"
+    gemini_api_key: SecretStr | None = None
+    gemini_api_base: str = "https://generativelanguage.googleapis.com/v1beta"
+    # gemini-2.5-flash is retired for new API consumers; the service itself
+    # points callers at 3.6-flash, so that is the default rather than a guess.
+    llm_model: str = "gemini-3.6-flash"
+    llm_timeout_seconds: float = Field(default=120.0, gt=0)
+    llm_max_retries: int = Field(default=3, ge=0)
     llm_max_tokens: int = Field(default=4096, gt=0)
     llm_temperature: float = Field(default=0.0, ge=0.0, le=1.0)
     extraction_schema_version: str = "v1"
+    # USD per million tokens, used to turn the token counter into a cost
+    # counter. Wrong numbers here produce a confidently wrong dashboard, so
+    # they are configuration rather than a constant buried in the client.
+    llm_input_cost_per_mtok: float = Field(default=0.30, ge=0)
+    llm_output_cost_per_mtok: float = Field(default=2.50, ge=0)
+    # How many retrieved chunks are put in front of the model. Retrieval
+    # grounded, never the whole filing.
+    extraction_context_chunks: int = Field(default=18, gt=0)
 
     # --- Evaluation -------------------------------------------------------
     # A value within this relative band of the XBRL fact counts as a match.

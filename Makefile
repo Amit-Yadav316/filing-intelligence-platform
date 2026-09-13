@@ -4,7 +4,7 @@ PY := .venv/bin/python
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help venv install lint fmt type test test-all parse index ablation probe universe up down seed demo clean
+.PHONY: help venv install lint fmt type test test-all parse index ablation extract probe universe serve dags up down seed demo clean
 
 help:  ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
@@ -47,6 +47,15 @@ ablation:  ## Measure BM25 vs dense vs hybrid on the labelled query set
 
 probe:  ## Block 1.3: can XBRL ground truth actually be resolved?
 	$(PY) -m scripts.probe_xbrl_resolution
+
+serve:  ## Run the API on :8000
+	$(PY) -m uvicorn src.serving.api:app --host 127.0.0.1 --port 8000
+
+extract:  ## Extract and score every indexed filing against XBRL
+	$(PY) -m scripts.run_extraction
+
+dags:  ## Verify every DAG parses (requires apache-airflow)
+	$(PY) -c "from airflow.models import DagBag; b=DagBag('dags', include_examples=False); assert not b.import_errors, b.import_errors; print(f'{len(b.dags)} DAGs parsed: {sorted(b.dags)}')"
 
 up:  ## Start the local stack
 	docker compose -f deploy/docker-compose.yml up -d

@@ -337,6 +337,17 @@ def main() -> int:
         (settings.docs_dir / "scorecards.json").write_text(
             json.dumps([c.as_dict() for c in cards], indent=2), encoding="utf-8"
         )
+        # Also into Mongo, so /extract and /accuracy serve the same numbers the
+        # README reports rather than a separate copy that can drift from it.
+        try:
+            from src.evaluate.store import ScorecardStore
+
+            with ScorecardStore(settings) as mongo:
+                mongo.ensure_indexes()
+                written = mongo.upsert_many([c.as_dict() for c in cards])
+            print(f"Published {written} scorecards to MongoDB")
+        except Exception as exc:
+            print(f"MongoDB unavailable, scorecards saved to JSON only: {exc}")
 
     floor = settings.slo_revenue_accuracy_floor
     revenue = agg.get("total_revenue")

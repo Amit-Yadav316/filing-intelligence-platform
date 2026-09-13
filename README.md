@@ -156,30 +156,41 @@ reporting that the comparison collapsed.
 
 ## Provenance
 
-Every answer traces to a character offset in a specific filing. The response carries the chain, not just the text.
+Every answer traces to a character range in a specific filing, and every extracted
+figure traces to the XBRL fact it was scored against. Both halves are live:
 
-```json
-{
-  "answer": "...",
-  "citations": [{
-    "chunk_id": "0000320193-23-000106::item7::c14",
-    "accession": "0000320193-23-000106",
-    "cik": "0000320193",
-    "form": "10-K",
-    "filed": "2023-11-03",
-    "item": "Item 7",
-    "char_start": 48211,
-    "char_end": 49034,
-    "edgar_url": "https://www.sec.gov/Archives/edgar/data/320193/..."
-  }],
-  "confidence": 0.87,
-  "abstained_fields": []
-}
+```bash
+curl -s localhost:8000/extract/0000093410-24-000013 | jq
 ```
 
-This is the archival half of document extraction and archival. An answer you cannot trace back to a byte range in a source document is not auditable.
+```
+CHEVRON CORP  10-K  FY2023   model: gemini-3.5-flash   accuracy: 1.0
 
----
+total_revenue        exact   196,913,000,000  =  196,913,000,000  us-gaap:RevenueFromContractWithCustomerExcludingAssessedTax
+net_income           exact    21,369,000,000  =   21,369,000,000  us-gaap:NetIncomeLoss
+total_assets         exact   261,632,000,000  =  261,632,000,000  us-gaap:Assets
+operating_cash_flow  exact    35,609,000,000  =   35,609,000,000  us-gaap:NetCashProvidedByUsedInOperatingActivities
+
+supporting chunk for total_revenue: 0000093410-24-000013::item14::c104
+```
+
+The left column is what the model read out of a retrieved chunk. The right column
+is what Chevron tagged in the same filing's XBRL. The tag name is recorded, so the
+comparison can be audited rather than trusted — and where two `us-gaap` concepts
+both plausibly mean "revenue", the disagreement is visible instead of hidden.
+
+That chain is what makes this an archive rather than a cache:
+
+| Link | Carried on | Guarantee |
+|---|---|---|
+| Answer → chunk | `chunk_id` | Stable within a parser version |
+| Chunk → text range | `char_start`, `char_end` | `text[start:end] == chunk.text`, asserted in tests |
+| Text → filing | `accession`, `parser_version` | Deterministic re-parse of immutable bytes |
+| Filing → source | `edgar_url`, sha256 in the manifest | Byte-identical to what EDGAR served |
+| Figure → ground truth | `us-gaap` tag, fiscal year | The filing's own XBRL |
+
+`parser_version` travels with every chunk, so if the parser changes, old offsets
+are known to be **stale** rather than silently pointing at the wrong bytes.
 
 ## Service level objectives
 

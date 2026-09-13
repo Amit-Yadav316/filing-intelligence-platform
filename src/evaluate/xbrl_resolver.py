@@ -240,6 +240,50 @@ class XBRLResolver:
                         years[end.year] += 1
         return years.most_common(1)[0][0] if years else fallback
 
+    def resolve_candidates(
+        self, facts: dict[str, Any], field: str, fiscal_year: int
+    ) -> list[GroundTruthFact]:
+        """Every configured concept for this field that the filer actually tagged.
+
+        ``resolve_field`` returns ONE answer, chosen by tag preference, because
+        a scorecard needs a single ground truth. But the tag map has already
+        declared that these concepts all mean this field - that is the whole
+        point of the mapping - so a model reporting a different one of them has
+        not misread the filing. It answered a question with two defensible
+        answers and picked the one the preference order did not.
+
+        This returns all of them so the evaluator can say so explicitly, rather
+        than recording a near-synonym as an error.
+        """
+        spec = self.fields.get(field)
+        if spec is None:
+            return []
+
+        found: list[GroundTruthFact] = []
+        for tag in spec.tags:
+            candidates = self._candidates(facts, spec, tag, fiscal_year)
+            if not candidates:
+                continue
+            annual = [c for c in candidates if c.get("form") == "10-K"] or candidates
+            annual.sort(key=lambda c: (c.get("filed") or "9999-99-99", c.get("accn") or ""))
+            chosen = annual[0]
+            found.append(
+                GroundTruthFact(
+                    field=field,
+                    value=Decimal(str(chosen["val"])),
+                    tag=tag,
+                    unit=chosen["_unit"],
+                    period_start=chosen["_start"],
+                    period_end=chosen["_end"],
+                    fiscal_year=fiscal_year,
+                    accession=str(chosen.get("accn", "")),
+                    form=str(chosen.get("form", "")),
+                    filed=_parse_date(chosen.get("filed")) or chosen["_end"],
+                    restated=len({str(c["val"]) for c in annual}) > 1,
+                )
+            )
+        return found
+
     def resolve(
         self,
         facts: dict[str, Any],

@@ -33,6 +33,7 @@ extraction fails. Six verdicts, each actionable:
 from __future__ import annotations
 
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from decimal import Decimal, InvalidOperation
@@ -89,6 +90,9 @@ class FieldScore:
     scale_factor: int | None = None
     source_chunks: tuple[str, ...] = ()
     note: str = ""
+    matched_alternative: bool = False
+    """True when the answer matched a different concept the tag map also
+    declares as meaning this field - a defensible answer, not the preferred one."""
 
     @property
     def is_correct(self) -> bool:
@@ -105,6 +109,7 @@ class FieldScore:
             "scale_factor": self.scale_factor,
             "source_chunks": list(self.source_chunks),
             "note": self.note,
+            "matched_alternative": self.matched_alternative,
         }
 
 
@@ -211,6 +216,7 @@ class ExtractionEvaluator:
         *,
         abstained: bool = False,
         source_chunks: tuple[str, ...] = (),
+        alternatives: Sequence[GroundTruthFact] = (),
     ) -> FieldScore:
         if truth is None:
             # Nothing to compare against. Saying "wrong" here would punish the
@@ -283,6 +289,33 @@ class ExtractionEvaluator:
                 source_chunks,
                 f"within {float(self.tolerance):.2%}",
             )
+
+        # Before calling this wrong, check whether the model reported a
+        # different concept the tag map already declares as meaning this field.
+        # "Net income" is both NetIncomeLoss (attributable to the parent) and
+        # ProfitLoss (including non-controlling interests); a model choosing the
+        # second has answered correctly under a different, equally defensible
+        # reading. Scoring that as an error measures the preference order, not
+        # the extractor.
+        for candidate in alternatives:
+            if candidate.tag == truth.tag:
+                continue
+            alt_error = self._relative_error(value, candidate.value)
+            if alt_error is not None and alt_error <= float(self.tolerance):
+                return FieldScore(
+                    field=field_name,
+                    verdict=Verdict.EXACT if value == candidate.value else Verdict.WITHIN_TOLERANCE,
+                    extracted=value,
+                    truth=actual,
+                    relative_error=relative,
+                    tag=candidate.tag,
+                    source_chunks=source_chunks,
+                    note=(
+                        f"matched us-gaap:{candidate.tag}, a concept the tag map also "
+                        f"maps to {field_name}; preferred tag was {truth.tag}"
+                    ),
+                    matched_alternative=True,
+                )
 
         scale = self._scale_factor(value, actual)
         if scale is not None:
@@ -395,6 +428,9 @@ class ExtractionEvaluator:
                     truth.get(name),
                     abstained=extraction.abstained(name),
                     source_chunks=tuple(extraction.sources_for(name)),
+                    alternatives=self.resolver.resolve_candidates(
+                        facts, name, extraction.fiscal_year
+                    ),
                 )
             )
         return card

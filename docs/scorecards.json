@@ -30,7 +30,8 @@
           "0000200406-23-000016::item8::c140",
           "0000200406-23-000016::item15::c1"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -54,7 +55,8 @@
           "0000200406-23-000016::item8::c140",
           "0000200406-23-000016::item15::c1"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -78,7 +80,8 @@
           "0000200406-23-000016::item8::c140",
           "0000200406-23-000016::item15::c1"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -102,7 +105,8 @@
           "0000200406-23-000016::item8::c140",
           "0000200406-23-000016::item15::c1"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       }
     ]
   },
@@ -113,7 +117,7 @@
     "form": "10-K",
     "fiscal_year": 2022,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.75,
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
@@ -126,20 +130,22 @@
         "source_chunks": [
           "0000034088-23-000020::item16::c122"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "57577000000",
         "truth": "55740000000",
         "relative_error": 0.032956584140653035,
-        "tag": "NetIncomeLoss",
+        "tag": "ProfitLoss",
         "scale_factor": null,
         "source_chunks": [
           "0000034088-23-000020::item16::c122"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "matched us-gaap:ProfitLoss, a concept the tag map also maps to net_income; preferred tag was NetIncomeLoss",
+        "matched_alternative": true
       },
       {
         "field": "total_assets",
@@ -152,7 +158,8 @@
         "source_chunks": [
           "0000034088-23-000020::item16::c124"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -165,7 +172,8 @@
         "source_chunks": [
           "0000034088-23-000020::item16::c125"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -176,20 +184,21 @@
     "form": "10-K",
     "fiscal_year": 2022,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.75,
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "246252000000",
         "truth": "235717000000",
         "relative_error": 0.044693424742381756,
-        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
           "0000093410-23-000009::item14::c103"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "matched us-gaap:Revenues, a concept the tag map also maps to total_revenue; preferred tag was RevenueFromContractWithCustomerExcludingAssessedTax",
+        "matched_alternative": true
       },
       {
         "field": "net_income",
@@ -202,7 +211,8 @@
         "source_chunks": [
           "0000093410-23-000009::item14::c103"
         ],
-        "note": "within 0.50%"
+        "note": "within 0.50%",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -215,7 +225,8 @@
         "source_chunks": [
           "0000093410-23-000009::item14::c105"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -228,7 +239,8 @@
         "source_chunks": [
           "0000093410-23-000009::item14::c72"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -252,7 +264,8 @@
         "source_chunks": [
           "0001045810-23-000017::item15::c105"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -265,7 +278,8 @@
         "source_chunks": [
           "0001045810-23-000017::item15::c8"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -278,7 +292,8 @@
         "source_chunks": [
           "0001045810-23-000017::item15::c10"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -291,7 +306,8 @@
         "source_chunks": [
           "0001045810-23-000017::item7::c26"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -302,7 +318,7 @@
     "form": "10-K",
     "fiscal_year": 2022,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.5,
+    "accuracy": 0.75,
     "scores": [
       {
         "field": "total_revenue",
@@ -315,20 +331,22 @@
         "source_chunks": [
           "0000731766-23-000008::item8::c92"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "20639000000",
         "truth": "20120000000",
         "relative_error": 0.025795228628230617,
-        "tag": "NetIncomeLoss",
+        "tag": "ProfitLoss",
         "scale_factor": null,
         "source_chunks": [
           "0000731766-23-000008::item8::c11"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "matched us-gaap:ProfitLoss, a concept the tag map also maps to net_income; preferred tag was NetIncomeLoss",
+        "matched_alternative": true
       },
       {
         "field": "total_assets",
@@ -341,7 +359,8 @@
         "source_chunks": [
           "0000731766-23-000008::item15::c8"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "wrong line item or wrong period",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -354,7 +373,8 @@
         "source_chunks": [
           "0000731766-23-000008::item7::c14"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -379,7 +399,8 @@
           "0000354950-23-000059::item8::c55",
           "0000354950-23-000059::item8::c60"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -394,7 +415,8 @@
           "0000354950-23-000059::item7::c8",
           "0000354950-23-000059::item7::c17"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -407,7 +429,8 @@
         "source_chunks": [
           "0000354950-23-000059::item8::c9"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -420,7 +443,8 @@
         "source_chunks": [
           "0000354950-23-000059::item8::c17"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -444,7 +468,8 @@
         "source_chunks": [
           "0000950170-23-028914::item7::c31"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -457,7 +482,8 @@
         "source_chunks": [
           "0000950170-23-028914::item7::c71"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -470,7 +496,8 @@
         "source_chunks": [
           "0000950170-23-028914::item15::c11"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -483,7 +510,8 @@
         "source_chunks": [
           "0000950170-23-028914::item7::c68"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -507,7 +535,8 @@
         "source_chunks": [
           "0000950170-23-035122::item8::c1"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -520,7 +549,8 @@
         "source_chunks": [
           "0000950170-23-035122::item8::c1"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -533,7 +563,8 @@
         "source_chunks": [
           "0000950170-23-035122::item8::c3"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -546,7 +577,8 @@
         "source_chunks": [
           "0000950170-23-035122::item8::c4"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -557,7 +589,7 @@
     "form": "10-K",
     "fiscal_year": 2023,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.75,
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
@@ -570,20 +602,22 @@
         "source_chunks": [
           "0000080424-23-000073::item8::c12"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "14738000000",
         "truth": "14653000000",
         "relative_error": 0.005800859892172251,
-        "tag": "NetIncomeLoss",
+        "tag": "ProfitLoss",
         "scale_factor": null,
         "source_chunks": [
           "0000080424-23-000073::item8::c12"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "matched us-gaap:ProfitLoss, a concept the tag map also maps to net_income; preferred tag was NetIncomeLoss",
+        "matched_alternative": true
       },
       {
         "field": "total_assets",
@@ -596,7 +630,8 @@
         "source_chunks": [
           "0000080424-23-000073::item8::c15"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -609,7 +644,8 @@
         "source_chunks": [
           "0000080424-23-000073::item7::c50"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -633,7 +669,8 @@
         "source_chunks": [
           "0000320193-23-000106::item7::c3"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -646,7 +683,8 @@
         "source_chunks": [
           "0000320193-23-000106::item8::c5"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -659,7 +697,8 @@
         "source_chunks": [
           "0000320193-23-000106::item8::c7"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -672,7 +711,75 @@
         "source_chunks": [
           "0000320193-23-000106::item8::c11"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
+      }
+    ]
+  },
+  {
+    "accession": "0000200406-24-000013",
+    "cik": "0000200406",
+    "company": "JOHNSON & JOHNSON",
+    "form": "10-K",
+    "fiscal_year": 2023,
+    "model": "openai/gpt-oss-120b",
+    "accuracy": 0.0,
+    "scores": [
+      {
+        "field": "total_revenue",
+        "verdict": "wrong",
+        "extracted": "85159000000",
+        "truth": "79990000000",
+        "relative_error": 0.06462057757219652,
+        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000200406-24-000013::item8::c6"
+        ],
+        "note": "wrong line item or wrong period",
+        "matched_alternative": false
+      },
+      {
+        "field": "net_income",
+        "verdict": "wrong",
+        "extracted": "35153000000",
+        "truth": "17941000000",
+        "relative_error": 0.9593668134440667,
+        "tag": "NetIncomeLoss",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000200406-24-000013::item8::c6"
+        ],
+        "note": "wrong line item or wrong period",
+        "matched_alternative": false
+      },
+      {
+        "field": "total_assets",
+        "verdict": "wrong",
+        "extracted": "167558000000",
+        "truth": "187378000000",
+        "relative_error": 0.10577549125297526,
+        "tag": "Assets",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000200406-24-000013::item8::c4"
+        ],
+        "note": "wrong line item or wrong period",
+        "matched_alternative": false
+      },
+      {
+        "field": "operating_cash_flow",
+        "verdict": "wrong",
+        "extracted": "22791000000",
+        "truth": "21194000000",
+        "relative_error": 0.075351514579598,
+        "tag": "NetCashProvidedByUsedInOperatingActivities",
+        "scale_factor": null,
+        "source_chunks": [
+          "0000200406-24-000013::item8::c13"
+        ],
+        "note": "wrong line item or wrong period",
+        "matched_alternative": false
       }
     ]
   },
@@ -703,7 +810,8 @@
           "0000021344-24-000009::item8::c182",
           "0000021344-24-000009::item15::c3"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -723,7 +831,8 @@
           "0000021344-24-000009::item8::c182",
           "0000021344-24-000009::item15::c3"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -743,7 +852,8 @@
           "0000021344-24-000009::item8::c182",
           "0000021344-24-000009::item15::c3"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -763,7 +873,8 @@
           "0000021344-24-000009::item8::c182",
           "0000021344-24-000009::item15::c3"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       }
     ]
   },
@@ -787,7 +898,8 @@
         "source_chunks": [
           "0001045810-24-000029::item15::c107"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -800,7 +912,8 @@
         "source_chunks": [
           "0001045810-24-000029::item15::c9"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -813,7 +926,8 @@
         "source_chunks": [
           "0001045810-24-000029::item15::c11"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -826,7 +940,8 @@
         "source_chunks": [
           "0001045810-24-000029::item7::c29"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -850,7 +965,8 @@
         "source_chunks": [
           "0000093410-24-000013::item14::c100"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "wrong line item or wrong period",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -863,7 +979,8 @@
         "source_chunks": [
           "0000093410-24-000013::item14::c100"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "wrong line item or wrong period",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -876,7 +993,8 @@
         "source_chunks": [
           "0000093410-24-000013::item14::c161"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -890,7 +1008,8 @@
           "0000093410-24-000013::item14::c73",
           "0000093410-24-000013::item14::c107"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -914,7 +1033,8 @@
         "source_chunks": [
           "0000034088-24-000018::item16::c128"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -927,7 +1047,8 @@
         "source_chunks": [
           "0000034088-24-000018::item16::c128"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -940,7 +1061,8 @@
         "source_chunks": [
           "0000034088-24-000018::item16::c130"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -953,7 +1075,8 @@
         "source_chunks": [
           "0000034088-24-000018::item16::c6"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -964,7 +1087,7 @@
     "form": "10-K",
     "fiscal_year": 2023,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.75,
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
@@ -977,20 +1100,22 @@
         "source_chunks": [
           "0000731766-24-000081::item8::c89"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "23144000000",
         "truth": "22381000000",
         "relative_error": 0.03409141682677271,
-        "tag": "NetIncomeLoss",
+        "tag": "ProfitLoss",
         "scale_factor": null,
         "source_chunks": [
           "0000731766-24-000081::item8::c11"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "matched us-gaap:ProfitLoss, a concept the tag map also maps to net_income; preferred tag was NetIncomeLoss",
+        "matched_alternative": true
       },
       {
         "field": "total_assets",
@@ -1003,7 +1128,8 @@
         "source_chunks": [
           "0000731766-24-000081::item8::c89"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -1016,7 +1142,8 @@
         "source_chunks": [
           "0000731766-24-000081::item7::c15"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -1053,7 +1180,8 @@
           "0000354950-24-000062::item8::c102",
           "0000354950-24-000062::item8::c107"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -1079,7 +1207,8 @@
           "0000354950-24-000062::item8::c102",
           "0000354950-24-000062::item8::c107"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -1105,7 +1234,8 @@
           "0000354950-24-000062::item8::c102",
           "0000354950-24-000062::item8::c107"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -1131,7 +1261,8 @@
           "0000354950-24-000062::item8::c102",
           "0000354950-24-000062::item8::c107"
         ],
-        "note": "model declined to answer"
+        "note": "model declined to answer",
+        "matched_alternative": false
       }
     ]
   },
@@ -1142,33 +1273,35 @@
     "form": "10-K",
     "fiscal_year": 2024,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.5,
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "648125000000",
         "truth": "642637000000",
         "relative_error": 0.008539813300510242,
-        "tag": "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "tag": "Revenues",
         "scale_factor": null,
         "source_chunks": [
           "0000104169-24-000056::item7::c25"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "matched us-gaap:Revenues, a concept the tag map also maps to total_revenue; preferred tag was RevenueFromContractWithCustomerExcludingAssessedTax",
+        "matched_alternative": true
       },
       {
         "field": "net_income",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "16270000000",
         "truth": "15511000000",
         "relative_error": 0.04893301527947908,
-        "tag": "NetIncomeLoss",
+        "tag": "ProfitLoss",
         "scale_factor": null,
         "source_chunks": [
           "0000104169-24-000056::item8::c26"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "matched us-gaap:ProfitLoss, a concept the tag map also maps to net_income; preferred tag was NetIncomeLoss",
+        "matched_alternative": true
       },
       {
         "field": "total_assets",
@@ -1181,7 +1314,8 @@
         "source_chunks": [
           "0000104169-24-000056::item7::c17"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -1194,7 +1328,8 @@
         "source_chunks": [
           "0000104169-24-000056::item7::c23"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -1218,7 +1353,8 @@
         "source_chunks": [
           "0000950170-24-075605::item15::c11"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -1231,7 +1367,8 @@
         "source_chunks": [
           "0000950170-24-075605::item15::c11"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -1244,7 +1381,8 @@
         "source_chunks": [
           "0000950170-24-075605::item15::c9"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -1257,7 +1395,8 @@
         "source_chunks": [
           "0000950170-24-075605::item15::c17"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -1281,7 +1420,8 @@
         "source_chunks": [
           "0000950170-24-087843::item8::c1"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -1294,7 +1434,8 @@
         "source_chunks": [
           "0000950170-24-087843::item8::c1"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -1307,7 +1448,8 @@
         "source_chunks": [
           "0000950170-24-087843::item8::c3"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -1320,7 +1462,8 @@
         "source_chunks": [
           "0000950170-24-087843::item8::c4"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -1331,7 +1474,7 @@
     "form": "10-K",
     "fiscal_year": 2024,
     "model": "openai/gpt-oss-120b",
-    "accuracy": 0.75,
+    "accuracy": 1.0,
     "scores": [
       {
         "field": "total_revenue",
@@ -1344,20 +1487,22 @@
         "source_chunks": [
           "0000080424-24-000083::item8::c13"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
-        "verdict": "wrong",
+        "verdict": "exact",
         "extracted": "14974000000",
         "truth": "14879000000",
         "relative_error": 0.00638483769070502,
-        "tag": "NetIncomeLoss",
+        "tag": "ProfitLoss",
         "scale_factor": null,
         "source_chunks": [
           "0000080424-24-000083::item8::c13"
         ],
-        "note": "wrong line item or wrong period"
+        "note": "matched us-gaap:ProfitLoss, a concept the tag map also maps to net_income; preferred tag was NetIncomeLoss",
+        "matched_alternative": true
       },
       {
         "field": "total_assets",
@@ -1370,7 +1515,8 @@
         "source_chunks": [
           "0000080424-24-000083::item8::c16"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -1384,7 +1530,8 @@
           "0000080424-24-000083::item7::c17",
           "0000080424-24-000083::item8::c18"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   },
@@ -1408,7 +1555,8 @@
         "source_chunks": [
           "0000320193-24-000123::item8::c3"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "net_income",
@@ -1421,7 +1569,8 @@
         "source_chunks": [
           "0000320193-24-000123::item8::c3"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "total_assets",
@@ -1434,7 +1583,8 @@
         "source_chunks": [
           "0000320193-24-000123::item8::c7"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       },
       {
         "field": "operating_cash_flow",
@@ -1447,7 +1597,8 @@
         "source_chunks": [
           "0000320193-24-000123::item8::c11"
         ],
-        "note": ""
+        "note": "",
+        "matched_alternative": false
       }
     ]
   }

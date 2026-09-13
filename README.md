@@ -42,13 +42,21 @@ scored against the XBRL facts the SEC published in the same filings.
 never invented a figure and never mis-scaled one, which is the failure mode that
 makes an extraction system unusable. Every error is a *plausible* wrong answer.
 
-**The gap between 55% and 80-90% is abstention, and abstention is the bottleneck -
-not the model.** When the model commits to a figure it is right 80-90% of the time.
-It declines roughly 30% of the time, and it declines because the retrieved context
-did not contain the statement, not because it was unsure of a number in front of
-it. The fix is retrieval, not a better model. Measured evidence for that: adding
-per-statement retrieval and exact line-item lexical anchors moved overall accuracy
-from **8.3% to 62.5%** on a fixed four-filing sample, without touching the model.
+**The gap between 55% and 80-90% is abstention.** When the model commits to a
+figure it is right 80-90% of the time; it declined roughly 30% of the time.
+
+An earlier version of this section attributed that abstention to retrieval. **That
+was wrong, and a measurement corrected it.** A diagnostic that costs no LLM calls
+() checked, for every abstained field, whether the
+ground-truth figure was actually present in the chunks the model was shown:
+
+| | Share | Diagnosis |
+|---|---|---|
+| Figure **was** in context | 67% | Prompt problem - the model had the number and declined |
+| Figure was **not** in context | 33% | Retrieval problem - abstaining was correct |
+
+Both causes were then fixed, and the retrieval half is verified below. The numbers
+in the table above predate both fixes; see [Open work](#open-work).
 
 **Almost every remaining error is a definitional ambiguity, not a mistake.**
 The seven `wrong` verdicts are nearly all cases where two defensible answers exist:

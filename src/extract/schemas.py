@@ -101,5 +101,15 @@ GEMINI_RESPONSE_SCHEMA: dict[str, Any] = {
             },
         },
     },
-    "required": ["fiscal_year", "reported_currency", "abstained_fields", "confidence"],
+    # Every scored field is required, though still nullable. Leaving them
+    # optional let the model omit a key entirely, which reads downstream as
+    # an abstention without the model having decided to abstain. Required
+    # plus nullable forces an explicit null.
+    "required": [
+        "fiscal_year",
+        "reported_currency",
+        "abstained_fields",
+        "confidence",
+        *SCORED_FIELDS,
+    ],
 }

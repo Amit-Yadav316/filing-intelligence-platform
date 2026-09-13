@@ -65,6 +65,26 @@ def load_facts(cik: str, client: EdgarClient) -> dict[str, Any]:
     return facts
 
 
+def annual_filings_only(filings: list[dict]) -> list[dict]:
+    """Keep 10-K filings when scoring annual fields.
+
+    The four scored fields are annual: full-year revenue, full-year net income,
+    year-end total assets, full-year operating cash flow. The XBRL resolver
+    deliberately accepts only durations of 340-400 days, so the ground truth is
+    an annual fact by construction.
+
+    A 10-Q reports a quarter. Asking a quarterly report for the full year's
+    revenue and scoring the absence as a failure measures nothing about the
+    extractor - the figure is genuinely not in the document, and abstaining is
+    the correct answer. Context-coverage measurement made this visible: all
+    three 10-Qs in the corpus scored 0/4 or 1/4 while every 10-K scored 4/4.
+
+    Excluding them is a narrowing of scope, not a filter chosen because it
+    flatters the numbers, and the README says how many filings were excluded.
+    """
+    return [f for f in filings if str(f.get("form", "")).upper().startswith("10-K")]
+
+
 def indexed_filings(store: ChunkStore) -> list[dict[str, Any]]:
     rows = (
         store.connect()
@@ -229,6 +249,18 @@ def merge_into_evaluation(section: str) -> Path:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--include-quarterly",
+        action="store_true",
+        help="Also score 10-Q filings. They cannot contain annual figures, "
+        "so this exists to demonstrate the effect rather than to be used.",
+    )
+    parser.add_argument(
+        "--accession",
+        action="append",
+        default=None,
+        help="Score only these filings. Useful for an A/B on a fixed sample.",
+    )
     parser.add_argument("--no-cache", action="store_true")
     parser.add_argument("--no-write", action="store_true")
     args = parser.parse_args()
@@ -241,6 +273,17 @@ def main() -> int:
 
     with ChunkStore(settings) as store, EdgarClient(settings) as edgar:
         filings = indexed_filings(store)
+        if not args.include_quarterly:
+            before = len(filings)
+            filings = annual_filings_only(filings)
+            if before != len(filings):
+                print(
+                    f"Scoring annual fields: {len(filings)} 10-K filings "
+                    f"({before - len(filings)} quarterly filings excluded)."
+                )
+        if args.accession:
+            wanted = set(args.accession)
+            filings = [f for f in filings if f["accession"] in wanted]
         if args.limit:
             filings = filings[: args.limit]
         if not filings:

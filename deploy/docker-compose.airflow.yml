@@ -1,0 +1,69 @@
+# Airflow, as an overlay on the main stack.
+#
+# A separate file rather than more services in docker-compose.yml, for the same
+# reason Airflow gets its own virtualenv in CI: its dependency constraints
+# conflict with the application's. Installing it alongside the app downgraded
+# typing_extensions, click and pathspec and broke pydantic at import. Here the
+# isolation is a container boundary instead of a venv boundary.
+#
+#   docker compose -f deploy/docker-compose.yml \
+#                  -f deploy/docker-compose.airflow.yml up -d
+#
+# Runs `airflow standalone`, which is the single-process scheduler + webserver +
+# SQLite metadata database. That is the right scope for demonstrating that the
+# DAGs parse, schedule and execute; a production deployment would use the
+# Postgres metadata backend and a real executor, and this file does not pretend
+# otherwise.
+
+name: filing-intel
+
+services:
+  airflow:
+    image: apache/airflow:2.10.5-python3.11
+    container_name: filing-intel-airflow
+    user: "50000:0"
+    environment:
+      AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+      AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+      # The DAG bodies import from src/, so the repository has to be importable.
+      PYTHONPATH: /opt/airflow/project
+      # Datastores are reachable by service name on the shared compose network,
+      # not on localhost - a container's localhost is itself.
+      POSTGRES_DSN: postgresql://filing:filing@postgres:5432/filings
+      REDIS_URL: redis://redis:6379/0
+      MONGO_URI: mongodb://mongo:27017
+      MINIO_ENDPOINT: http://minio:9000
+      PROMETHEUS_PUSHGATEWAY: http://pushgateway:9091
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    env_file:
+      - ../.env
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../dags:/opt/airflow/dags:ro
+      - ../src:/opt/airflow/project/src:ro
+      - ../scripts:/opt/airflow/project/scripts:ro
+      - ../config:/opt/airflow/project/config:ro
+      - airflow-data:/opt/airflow
+    # Only the dependencies the DAG tasks actually import. Deliberately NOT the
+    # full application: sentence-transformers pulls torch, ~3GB into the image,
+    # for a stage that is better run on a worker with the model cached. The
+    # ingest and schema tasks need none of it.
+    command: >
+      bash -c "pip install --no-cache-dir -q
+      'httpx>=0.27' 'pydantic>=2.7' 'pydantic-settings>=2.3' 'PyYAML>=6.0'
+      'beautifulsoup4>=4.12' 'lxml>=5.2' 'structlog>=24.1' 'tenacity>=8.3'
+      'prometheus-client>=0.20' 'boto3>=1.34' 'tabulate>=0.9'
+      'psycopg[binary]>=3.1' 'pgvector>=0.2.5' 'redis>=5.0'
+      && airflow standalone"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  airflow-data:

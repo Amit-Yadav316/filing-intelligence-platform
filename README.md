@@ -401,7 +401,9 @@ near-synonymous concepts accepted, and the 52/53-week fiscal-year rule corrected
 - **Isolate the model's contribution.** The controlled Gemini re-run is written and
   ready; it needs a day's quota or about $0.10 of billing.
 - **`total_assets` at 81.8%**, the weakest field, including one genuine misread.
-- **Run the DAGs.** Parse-validated in CI, never executed against a live scheduler.
+- **Scale the orchestrated path.** The DAGs now run against a live scheduler
+  (), but only the ingest DAG has executed
+  end to end; process_filings needs the embedding model in the worker image.
 
 ## What this does not do, and why
 

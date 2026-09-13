@@ -256,3 +256,28 @@ def test_live_companyfacts_smoke() -> None:
         facts = live.get_company_facts(320193)
     assert facts["entityName"].startswith("Apple")
     assert "Revenues" in facts["facts"]["us-gaap"] or "Assets" in facts["facts"]["us-gaap"]
+
+
+@respx.mock
+def test_a_403_on_the_daily_index_is_treated_as_no_index(client: EdgarClient) -> None:
+    """Regression. EDGAR answers 403, not 404, for a daily index that does not
+    exist - every weekend and every market holiday. A catchup backfill over a
+    year crosses about 114 such dates, and treating only 404 as "no index"
+    failed the DAG on all of them. Found by running the real DAG, where the
+    2024-01-01 New Year holiday killed the first scheduled run."""
+    respx.get(INDEX_URL).mock(return_value=httpx.Response(403))
+
+    assert client.get_daily_index(date(2024, 1, 2)) == []
+
+
+@respx.mock
+def test_a_403_elsewhere_still_raises(client: EdgarClient) -> None:
+    """The tolerance is scoped to the daily index. A 403 on a document is a
+    real failure - most likely a rejected User-Agent - and must not be
+    swallowed."""
+    respx.get(FACTS_URL).mock(return_value=httpx.Response(403))
+
+    with pytest.raises(EdgarError) as err:
+        client.get_company_facts(320193)
+
+    assert err.value.status == 403

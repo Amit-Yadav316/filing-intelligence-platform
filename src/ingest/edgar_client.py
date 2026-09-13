@@ -241,8 +241,23 @@ class EdgarClient:
         try:
             response = self._get(url, endpoint="daily_index")
         except EdgarError as exc:
-            if exc.status == 404:
-                log.info("edgar_no_index_for_date", date=on.isoformat(), url=url)
+            # EDGAR answers 403, not 404, for a daily index that does not exist -
+            # every weekend and every market holiday. A backfill with
+            # catchup=True over a year crosses about 114 such dates, so treating
+            # only 404 as "no index" fails the DAG on all of them.
+            #
+            # Conflating this with a genuine auth 403 is the risk, and it is
+            # bounded: a rejected User-Agent fails on EVERY date rather than on
+            # non-publishing ones, and Settings refuses to construct without a
+            # contact address in the first place.
+            if exc.status in (403, 404):
+                log.info(
+                    "edgar_no_index_for_date",
+                    date=on.isoformat(),
+                    status=exc.status,
+                    url=url,
+                    note="weekend or market holiday; a 403 on every date means a bad User-Agent",
+                )
                 return []
             raise
 

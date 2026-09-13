@@ -116,8 +116,10 @@ Accuracy in this project is honest because of what it refuses to claim. Keep tha
 
 - **Don't say "switching to Groq improved accuracy."** Provider, retrieval and prompt
   changed together; the model's share is unmeasured, and the README says so.
-- **Don't say "Airflow-orchestrated" without qualifying it.** The DAGs are
-  parse-validated in CI and have **never run** against a live scheduler.
+- **Qualify "Airflow-orchestrated" accurately.** The ingest DAG has executed
+  end to end against a live scheduler on real EDGAR data, with catchup and
+  max_active_runs verified. process_filings and extract_and_evaluate are
+  parse-validated and wired, but have not run a full pass.
 - **Don't quote 86.4% without n.** It is 22 filings and 88 extractions; one filing
   moves it about a point.
 - **Don't imply schema enforcement.** The final run used JSON mode with the schema

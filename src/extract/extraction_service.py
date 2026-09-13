@@ -74,6 +74,21 @@ definitional constraints.
 """
 
 
+def estimate_tokens(text: str) -> int:
+    """Approximate token count for a rendered context.
+
+    Calibrated against a provider's own count rather than assumed. The usual
+    characters-over-four rule underestimated a real extraction prompt by about
+    1.6x - Groq counted 10,087 tokens where that rule predicted 6,339 - because
+    serialised financial tables are dense with digits, separators and pipes,
+    all of which tokenize far more finely than English prose.
+
+    Overestimating is the safe direction: it costs a little context, where
+    underestimating costs the whole request with a 413.
+    """
+    return int(len(text) / 2.5)
+
+
 def is_index_table(text: str) -> bool:
     """True for a table of contents dressed as a financial statement.
 
@@ -202,38 +217,50 @@ class ExtractionService:
         return self._redis
 
     # --- caching ----------------------------------------------------------
-    def cache_key(self, accession: str) -> str:
-        """Keyed on the filing, the schema, the model and the PROMPT.
+    def cache_key(self, accession: str, prompt: str = "") -> str:
+        """Keyed on everything that changes what the model is asked.
 
-        All four belong in the key. The prompt was missing from the first
-        version, which meant editing it changed nothing on a re-run: the cache
-        served answers produced by the previous prompt, so an A/B test between
-        two prompts would have compared a prompt against itself.
+        This has been wrong twice, in the same way each time, so it is now keyed
+        on the full request rather than on a proxy for it.
+
+        The first version keyed on filing, schema version and model. Editing the
+        system prompt then changed nothing on a re-run - the cache happily
+        served answers from the previous prompt, which would have made an A/B
+        test compare a prompt against itself.
+
+        Adding a hash of the system prompt fixed that and missed the other half:
+        the RETRIEVED CONTEXT is also part of the request, and changing the
+        context budget from 18 chunks to a 6,000-token cap produced cache hits
+        from a configuration that no longer existed.
+
+        Hashing the assembled prompt covers both, and anything similar in
+        future. Building the context to compute it costs a retrieval and no LLM
+        call, which is the cheap half of the work.
         """
-        prompt_fingerprint = hashlib.sha256(SYSTEM_PROMPT.encode("utf-8")).hexdigest()[:12]
+        fingerprint = hashlib.sha256((SYSTEM_PROMPT + prompt).encode("utf-8")).hexdigest()[:16]
         return (
             f"extract:{accession}:{self.settings.extraction_schema_version}:"
-            f"{self.settings.llm_model}:{prompt_fingerprint}"
+            f"{self.settings.llm_model}:{fingerprint}"
         )
 
-    def _cached(self, accession: str) -> FilingExtraction | None:
+    def _cached(self, accession: str, prompt: str = "") -> FilingExtraction | None:
         client = self.redis
         if client is None:
             return None
         try:
-            blob = client.get(self.cache_key(accession))
+            blob = client.get(self.cache_key(accession, prompt))
             return FilingExtraction.model_validate_json(blob) if blob else None
         except Exception as exc:
             log.warning("extraction_cache_read_failed", error=str(exc))
             return None
 
-    def _store(self, accession: str, extraction: FilingExtraction) -> None:
+    def _store(self, accession: str, extraction: FilingExtraction, prompt: str = "") -> None:
         client = self.redis
         if client is None:
             return
         try:
             client.set(
-                self.cache_key(accession),
+                self.cache_key(accession, prompt),
                 extraction.model_dump_json(),
                 ex=self.settings.redis_cache_ttl_seconds,
             )
@@ -248,7 +275,15 @@ class ExtractionService:
         Deduplicated by chunk id, capped by ``extraction_context_chunks``.
         """
         budget = self.settings.extraction_context_chunks
+        token_cap = self.settings.extraction_context_max_tokens
         seen: dict[str, SearchHit] = {}
+
+        def would_exceed(hit: SearchHit) -> bool:
+            """True when adding this chunk would break the token ceiling."""
+            if not token_cap:
+                return False
+            used = sum(estimate_tokens(h.text) for h in seen.values())
+            return used + estimate_tokens(hit.text) > token_cap
 
         def take(query: str, limit: int, chunk_type: str | None) -> None:
             if len(seen) >= budget:
@@ -261,7 +296,7 @@ class ExtractionService:
             for f in fused:
                 if len(seen) >= budget:
                     return
-                if is_index_table(f.hit.text):
+                if is_index_table(f.hit.text) or would_exceed(f.hit):
                     continue
                 seen.setdefault(f.hit.chunk_id, f.hit)
 
@@ -276,6 +311,10 @@ class ExtractionService:
                 filters=MetadataFilter(accession=accession, chunk_type="table"),
             ):
                 if is_index_table(hit.text):
+                    continue
+                # Anchors are the highest-value chunks, so they are admitted
+                # before anything else and only the cap can turn one away.
+                if would_exceed(hit):
                     continue
                 seen.setdefault(hit.chunk_id, hit)
 
@@ -328,17 +367,21 @@ class ExtractionService:
         company: str | None = None,
         use_cache: bool = True,
     ) -> ExtractionOutcome:
-        if use_cache:
-            cached = self._cached(accession)
-            if cached is not None:
-                log.info("extraction_cache_hit", accession=accession)
-                return ExtractionOutcome(accession, cached, cached=True)
-
+        # Context first, then the cache: the prompt is part of the key, so it
+        # has to exist before the key can be computed. Retrieval is cheap and
+        # involves no LLM call, which is what makes that ordering affordable.
         hits = self.build_context(accession)
         if not hits:
             return ExtractionOutcome(accession, None, error="no chunks retrieved for this filing")
 
         prompt = self.build_prompt(hits, fiscal_year, company)
+
+        if use_cache:
+            cached = self._cached(accession, prompt)
+            if cached is not None:
+                log.info("extraction_cache_hit", accession=accession)
+                return ExtractionOutcome(accession, cached, cached=True)
+
         outcome = ExtractionOutcome(accession, None, context_chunks=len(hits))
 
         for attempt in (1, 2):
@@ -384,7 +427,7 @@ class ExtractionService:
                 return outcome
 
             outcome.extraction = extraction
-            self._store(accession, extraction)
+            self._store(accession, extraction, prompt)
             log.info(
                 "extraction_complete",
                 accession=accession,

@@ -114,6 +114,11 @@ class Settings(BaseSettings):
     llm_model: str = "gemini-3.6-flash"
     llm_timeout_seconds: float = Field(default=120.0, gt=0)
     llm_max_retries: int = Field(default=3, ge=0)
+    # Minimum gap between LLM requests. Providers rate-limit on tokens per
+    # MINUTE, not per request, so a burst of large prompts trips the limit even
+    # well under the request quota: Groq's free tier allows 8,000 TPM, and one
+    # extraction prompt is most of that. Pacing turns a wall into a queue.
+    llm_min_interval_seconds: float = Field(default=0.0, ge=0)
     llm_max_tokens: int = Field(default=4096, gt=0)
     llm_temperature: float = Field(default=0.0, ge=0.0, le=1.0)
     extraction_schema_version: str = "v1"
@@ -125,6 +130,12 @@ class Settings(BaseSettings):
     # How many retrieved chunks are put in front of the model. Retrieval
     # grounded, never the whole filing.
     extraction_context_chunks: int = Field(default=18, gt=0)
+    # The real constraint is tokens, not chunks: providers rate-limit on tokens
+    # per minute, and a chunk of a dense financial table costs several times a
+    # chunk of prose. Counting chunks let one filing build a 10,000-token prompt
+    # against an 8,000-token ceiling while another built 3,000. Zero disables
+    # the cap and falls back to the chunk count alone.
+    extraction_context_max_tokens: int = Field(default=0, ge=0)
 
     # --- Evaluation -------------------------------------------------------
     # A value within this relative band of the XBRL fact counts as a match.

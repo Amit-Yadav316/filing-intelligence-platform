@@ -41,6 +41,20 @@ class LLMError(RuntimeError):
     """A generation request failed permanently."""
 
 
+class RateLimitedError(LLMError):
+    """A transient rate limit, carrying the provider's own retry delay.
+
+    Backing off by a guessed amount is the wrong move when the provider has
+    told you the answer. Token-per-minute limits in particular need a wait
+    measured in tens of seconds, where exponential jitter would retry far too
+    early and burn another attempt against the same closed window.
+    """
+
+    def __init__(self, message: str, *, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
+
+
 class NonRetryableError(LLMError):
     """The request itself is wrong, so sending it again cannot help.
 
@@ -100,6 +114,7 @@ class LLMClient(ABC):
     def __init__(self, settings: Settings | None = None, *, sleep: Any = time.sleep) -> None:
         self.settings = settings or get_settings()
         self._sleep = sleep
+        self._last_call = 0.0
         self._breaker = CircuitBreaker(
             fail_threshold=5, reset_seconds=60.0, name=f"llm:{self.settings.llm_provider}"
         )
@@ -118,6 +133,7 @@ class LLMClient(ABC):
         last = "no attempt made"
         for attempt in range(self.settings.llm_max_retries + 1):
             self._breaker.before_call()
+            self._pace()
             try:
                 with STAGE_LATENCY.labels(stage="llm").time():
                     response = self._post(prompt, schema, system)
@@ -131,9 +147,15 @@ class LLMClient(ABC):
                 self._breaker.record_failure()
                 last = str(exc)
                 if attempt < self.settings.llm_max_retries:
-                    delay = random.uniform(0, min(2**attempt, 30))
+                    # The provider's own retry-after beats a guess every time.
+                    told = getattr(exc, "retry_after", None)
+                    delay = told if told else random.uniform(0, min(2**attempt, 30))
                     log.warning(
-                        "llm_retry", attempt=attempt + 1, reason=last, sleeping=round(delay, 1)
+                        "llm_retry",
+                        attempt=attempt + 1,
+                        reason=last,
+                        sleeping=round(delay, 1),
+                        source="provider" if told else "jitter",
                     )
                     self._sleep(delay)
                 continue
@@ -144,6 +166,16 @@ class LLMClient(ABC):
         raise LLMError(
             f"LLM request failed after {self.settings.llm_max_retries + 1} attempts: {last}"
         )
+
+    def _pace(self) -> None:
+        """Hold the configured minimum gap between requests."""
+        interval = self.settings.llm_min_interval_seconds
+        if interval <= 0:
+            return
+        elapsed = time.monotonic() - self._last_call
+        if elapsed < interval:
+            self._sleep(interval - elapsed)
+        self._last_call = time.monotonic()
 
     def _record(self, response: LLMResponse) -> None:
         LLM_TOKENS.labels(model=response.model, direction="input").inc(response.input_tokens)
@@ -401,14 +433,24 @@ class OpenAICompatibleClient(LLMClient):
         that has already run out.
         """
         body = response.text[:400].lower()
-        retry_after = response.headers.get("retry-after")
-        daily_markers = ("per day", "daily limit", "quota exceeded", "rpd")
+        raw = response.headers.get("retry-after")
+        try:
+            retry_after = float(raw) if raw else None
+        except ValueError:
+            retry_after = None
+
+        daily_markers = ("per day", "daily limit", "requests per day", "rpd")
         if any(marker in body for marker in daily_markers):
             return QuotaExhaustedError(
                 f"daily quota exhausted: {response.text[:200]}",
-                retry_after=float(retry_after) if retry_after and retry_after.isdigit() else None,
+                retry_after=retry_after,
             )
-        return LLMError(f"HTTP 429 rate limited (retry-after={retry_after}): {response.text[:160]}")
+        return RateLimitedError(
+            f"HTTP 429 rate limited: {response.text[:160]}",
+            # Tokens-per-minute limits clear when the window rolls, so fall back
+            # to a full minute rather than to exponential jitter.
+            retry_after=retry_after or 60.0,
+        )
 
 
 def build_llm_client(settings: Settings | None = None) -> LLMClient:

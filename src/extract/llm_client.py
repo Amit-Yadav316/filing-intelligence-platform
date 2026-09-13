@@ -25,6 +25,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import httpx
+from pydantic import SecretStr
 
 from src.config.settings import Settings, get_settings
 from src.ingest.circuit_breaker import CircuitBreaker
@@ -38,6 +39,17 @@ RETRYABLE_STATUS = frozenset({408, 429, 500, 502, 503, 504})
 
 class LLMError(RuntimeError):
     """A generation request failed permanently."""
+
+
+class NonRetryableError(LLMError):
+    """The request itself is wrong, so sending it again cannot help.
+
+    A malformed request, an unknown model, a rejected schema: every one returns
+    a 4xx that is identical on every attempt. The generic retry path treated
+    these like a transient failure and sent the same doomed request four times,
+    which on a quota-limited free tier spends a fifth of the daily budget to
+    learn nothing.
+    """
 
 
 class QuotaExhaustedError(LLMError):
@@ -109,9 +121,11 @@ class LLMClient(ABC):
             try:
                 with STAGE_LATENCY.labels(stage="llm").time():
                     response = self._post(prompt, schema, system)
-            except QuotaExhaustedError:
-                # Do not retry and do not trip the breaker: the provider is
-                # healthy, we have simply run out of budget.
+            except (QuotaExhaustedError, NonRetryableError):
+                # Neither is worth a retry, and neither means the provider is
+                # unhealthy: one is our budget, the other is our request. The
+                # breaker stays closed so a bad request cannot open it for
+                # every other caller.
                 raise
             except LLMError as exc:
                 self._breaker.record_failure()
@@ -230,9 +244,9 @@ class GeminiClient(LLMClient):
         if response.status_code in RETRYABLE_STATUS:
             raise LLMError(f"HTTP {response.status_code}: {response.text[:200]}")
         if not response.is_success:
-            # A 4xx that is not a rate limit is a bad request, and retrying an
-            # identical bad request just burns the budget.
-            raise LLMError(f"HTTP {response.status_code} (not retryable): {response.text[:300]}")
+            raise NonRetryableError(
+                f"HTTP {response.status_code} (not retryable): {response.text[:300]}"
+            )
 
         body = response.json()
         candidates = body.get("candidates") or []
@@ -259,12 +273,169 @@ class GeminiClient(LLMClient):
         )
 
 
+class OpenAICompatibleClient(LLMClient):
+    """Any provider speaking the OpenAI chat-completions format.
+
+    Groq, OpenRouter, Cerebras, Together and a local vLLM server are the same
+    wire protocol with a different base URL, so they are one class rather than
+    five. The differences that do matter - whether the provider enforces a JSON
+    schema or merely guarantees valid JSON - are configuration.
+    """
+
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        *,
+        base_url: str,
+        api_key: str,
+        model: str,
+        provider: str = "openai-compatible",
+        client: httpx.Client | None = None,
+        sleep: Any = time.sleep,
+    ) -> None:
+        super().__init__(settings, sleep=sleep)
+        self._base_url = base_url.rstrip("/")
+        self._api_key = api_key
+        self._model = model
+        self._provider = provider
+        self._owns = client is None
+        self._http = client or httpx.Client(timeout=self.settings.llm_timeout_seconds)
+
+    @property
+    def model(self) -> str:
+        return self._model
+
+    def close(self) -> None:
+        if self._owns:
+            self._http.close()
+
+    def _response_format(self, schema: dict[str, Any]) -> dict[str, Any]:
+        if self.settings.llm_structured_mode == "json_schema":
+            return {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "filing_extraction",
+                    "strict": True,
+                    "schema": schema,
+                },
+            }
+        return {"type": "json_object"}
+
+    def _system_text(self, system: str | None, schema: dict[str, Any]) -> str:
+        """In json_object mode the schema is not enforced, so it is described.
+
+        Without this the model returns valid JSON of a shape it invented, which
+        parses cleanly and then fails validation - the most annoying possible
+        failure, because nothing errors until pydantic rejects it.
+        """
+        base = system or ""
+        if self.settings.llm_structured_mode == "json_schema":
+            return base
+        return (
+            base
+            + "\n\nRespond with a single JSON object matching exactly this schema. "
+            + "Include every required key, using null where you abstain.\n"
+            + json.dumps(schema, separators=(",", ":"))
+        )
+
+    def _post(self, prompt: str, schema: dict[str, Any], system: str | None) -> LLMResponse:
+        payload: dict[str, Any] = {
+            "model": self._model,
+            "temperature": self.settings.llm_temperature,
+            "max_tokens": self.settings.llm_max_tokens,
+            "response_format": self._response_format(schema),
+            "messages": [
+                {"role": "system", "content": self._system_text(system, schema)},
+                {"role": "user", "content": prompt},
+            ],
+        }
+
+        try:
+            response = self._http.post(
+                f"{self._base_url}/chat/completions",
+                json=payload,
+                headers={
+                    "Authorization": f"Bearer {self._api_key}",
+                    "Content-Type": "application/json",
+                },
+            )
+        except httpx.HTTPError as exc:
+            raise LLMError(f"transport error: {exc}") from exc
+
+        if response.status_code == 429:
+            raise self._classify_openai_429(response)
+        if response.status_code in RETRYABLE_STATUS:
+            raise LLMError(f"HTTP {response.status_code}: {response.text[:200]}")
+        if not response.is_success:
+            raise NonRetryableError(
+                f"HTTP {response.status_code} (not retryable): {response.text[:300]}"
+            )
+
+        body = response.json()
+        choices = body.get("choices") or []
+        if not choices:
+            raise LLMError(f"no choices returned: {json.dumps(body)[:300]}")
+
+        text = (choices[0].get("message") or {}).get("content") or ""
+        if not text.strip():
+            reason = choices[0].get("finish_reason", "unknown")
+            raise LLMError(f"empty completion (finish_reason={reason})")
+
+        usage = body.get("usage") or {}
+        input_tokens = int(usage.get("prompt_tokens", 0))
+        output_tokens = int(usage.get("completion_tokens", 0))
+        return LLMResponse(
+            text=text,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            model=self._model,
+            cost_usd=self._cost(input_tokens, output_tokens),
+        )
+
+    @staticmethod
+    def _classify_openai_429(response: httpx.Response) -> LLMError:
+        """Daily quota versus momentary rate limit, as with Gemini.
+
+        The two need opposite responses: a per-minute limit should be waited
+        out, a per-day limit must abort, because every retry spends the budget
+        that has already run out.
+        """
+        body = response.text[:400].lower()
+        retry_after = response.headers.get("retry-after")
+        daily_markers = ("per day", "daily limit", "quota exceeded", "rpd")
+        if any(marker in body for marker in daily_markers):
+            return QuotaExhaustedError(
+                f"daily quota exhausted: {response.text[:200]}",
+                retry_after=float(retry_after) if retry_after and retry_after.isdigit() else None,
+            )
+        return LLMError(f"HTTP 429 rate limited (retry-after={retry_after}): {response.text[:160]}")
+
+
 def build_llm_client(settings: Settings | None = None) -> LLMClient:
     """Construct the client the configuration asks for."""
     settings = settings or get_settings()
-    if settings.llm_provider == "gemini":
+    provider = settings.llm_provider
+
+    if provider == "gemini":
         return GeminiClient(settings)
-    raise LLMError(
-        f"provider {settings.llm_provider!r} is configured but no client is implemented. "
-        "Gemini is the implemented path; add a subclass of LLMClient for others."
+
+    # Every remaining provider speaks the OpenAI wire format.
+    endpoints: dict[str, tuple[str, SecretStr | None]] = {
+        "groq": (settings.groq_api_base, settings.groq_api_key),
+        "openrouter": (settings.openrouter_api_base, settings.openrouter_api_key),
+        "cerebras": (settings.cerebras_api_base, settings.cerebras_api_key),
+        "openai": (settings.openai_api_base, settings.openai_api_key),
+    }
+    if provider not in endpoints:
+        raise LLMError(f"no client implemented for provider {provider!r}")
+
+    base_url, key = endpoints[provider]
+    if key is None:
+        raise LLMError(f"{provider.upper()}_API_KEY is not set but LLM_PROVIDER={provider}")
+    return OpenAICompatibleClient(
+        settings,
+        base_url=base_url,
+        api_key=key.get_secret_value(),
+        model=settings.llm_model,
+        provider=provider,
     )

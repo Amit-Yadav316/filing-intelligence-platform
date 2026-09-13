@@ -291,7 +291,7 @@ and its weakness shows up honestly in the table above.
 | Document store | MongoDB | extraction results and scorecards are semi-structured and schema-evolving |
 | Cache | Redis | content-hash embedding cache, LLM response cache, rate-limit tokens |
 | Embeddings | sentence-transformers | local, free, no per-call cost on reprocessing |
-| LLM | Anthropic or OpenAI API | schema-constrained extraction only |
+| LLM | Any of Gemini, Groq, OpenRouter, Cerebras, OpenAI | one provider-agnostic client; swapping is config, not code |
 | Serving | FastAPI + uvicorn | typed contract, provenance in every response |
 | Observability | Prometheus, Grafana, AlertManager | SLO-based alerting |
 | CI | GitHub Actions | ruff, mypy, pytest, container build, smoke test |

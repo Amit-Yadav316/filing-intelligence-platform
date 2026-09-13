@@ -83,11 +83,32 @@ class Settings(BaseSettings):
     retrieval_candidate_k: int = Field(default=50, gt=0, description="Per-arm depth before fusion.")
 
     # --- Extraction -------------------------------------------------------
-    llm_provider: Literal["gemini", "anthropic", "openai"] = "gemini"
+    llm_provider: Literal["gemini", "groq", "openrouter", "cerebras", "openai", "anthropic"] = (
+        "gemini"
+    )
     anthropic_api_key: SecretStr | None = None
     openai_api_key: SecretStr | None = None
     gemini_api_key: SecretStr | None = None
     gemini_api_base: str = "https://generativelanguage.googleapis.com/v1beta"
+
+    # Providers that speak the OpenAI chat-completions wire format. One client
+    # serves all of them; only the base URL, key and model differ.
+    groq_api_key: SecretStr | None = None
+    groq_api_base: str = "https://api.groq.com/openai/v1"
+    openrouter_api_key: SecretStr | None = None
+    openrouter_api_base: str = "https://openrouter.ai/api/v1"
+    cerebras_api_key: SecretStr | None = None
+    cerebras_api_base: str = "https://api.cerebras.ai/v1"
+    openai_api_base: str = "https://api.openai.com/v1"
+
+    # How structured output is requested.
+    #   json_schema  - the provider enforces the schema. Best, not universal.
+    #   json_object  - the provider guarantees valid JSON only, so the schema
+    #                  is described in the prompt instead. Portable everywhere.
+    # Enforcement differs between providers, so the mode is recorded alongside
+    # any accuracy figure: a model judged on an enforced schema and one judged
+    # on a described schema are not directly comparable.
+    llm_structured_mode: Literal["json_schema", "json_object"] = "json_object"
     # gemini-2.5-flash is retired for new API consumers; the service itself
     # points callers at 3.6-flash, so that is the default rather than a guess.
     llm_model: str = "gemini-3.6-flash"

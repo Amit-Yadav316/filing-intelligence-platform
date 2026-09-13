@@ -79,32 +79,38 @@ class FilingExtraction(BaseModel):
         return self.field_sources.get(field) or self.source_chunks
 
 
-# The JSON Schema handed to the model. Written out rather than generated from
-# the pydantic model because Gemini's responseSchema accepts a restricted
-# dialect - no $ref, no anyOf - and a generated schema trips over both.
-GEMINI_RESPONSE_SCHEMA: dict[str, Any] = {
-    "type": "OBJECT",
+# --- the response contract, in one place ---------------------------------
+#
+# Standard JSON Schema is the source of truth, because it is what every
+# OpenAI-compatible provider speaks. Gemini accepts a restricted dialect of its
+# own - uppercase type names, a `nullable` flag instead of union types, and no
+# $ref or anyOf - so it is DERIVED from this rather than maintained separately.
+# Two hand-written schemas would drift the moment a field is added, and the
+# symptom would be one provider silently omitting a field the other requires.
+
+EXTRACTION_JSON_SCHEMA: dict[str, Any] = {
+    "type": "object",
     "properties": {
-        "fiscal_year": {"type": "INTEGER"},
-        "total_revenue": {"type": "NUMBER", "nullable": True},
-        "net_income": {"type": "NUMBER", "nullable": True},
-        "total_assets": {"type": "NUMBER", "nullable": True},
-        "operating_cash_flow": {"type": "NUMBER", "nullable": True},
-        "reported_currency": {"type": "STRING"},
-        "top_risk_categories": {"type": "ARRAY", "items": {"type": "STRING"}},
-        "abstained_fields": {"type": "ARRAY", "items": {"type": "STRING"}},
-        "confidence": {"type": "NUMBER"},
+        "fiscal_year": {"type": "integer"},
+        "total_revenue": {"type": ["number", "null"]},
+        "net_income": {"type": ["number", "null"]},
+        "total_assets": {"type": ["number", "null"]},
+        "operating_cash_flow": {"type": ["number", "null"]},
+        "reported_currency": {"type": "string"},
+        "top_risk_categories": {"type": "array", "items": {"type": "string"}},
+        "abstained_fields": {"type": "array", "items": {"type": "string"}},
+        "confidence": {"type": "number"},
         "field_sources": {
-            "type": "OBJECT",
+            "type": "object",
             "properties": {
-                f: {"type": "ARRAY", "items": {"type": "STRING"}} for f in SCORED_FIELDS
+                f: {"type": "array", "items": {"type": "string"}} for f in SCORED_FIELDS
             },
         },
     },
     # Every scored field is required, though still nullable. Leaving them
-    # optional let the model omit a key entirely, which reads downstream as
-    # an abstention without the model having decided to abstain. Required
-    # plus nullable forces an explicit null.
+    # optional let the model omit a key entirely, which reads downstream as an
+    # abstention without the model having decided to abstain. Required plus
+    # nullable forces an explicit null.
     "required": [
         "fiscal_year",
         "reported_currency",
@@ -112,4 +118,32 @@ GEMINI_RESPONSE_SCHEMA: dict[str, Any] = {
         "confidence",
         *SCORED_FIELDS,
     ],
+    "additionalProperties": False,
 }
+
+
+def to_gemini_schema(schema: dict[str, Any]) -> dict[str, Any]:
+    """Translate standard JSON Schema into Gemini's responseSchema dialect."""
+    node: dict[str, Any] = {}
+    raw_type = schema.get("type")
+
+    if isinstance(raw_type, list):
+        # ["number", "null"] becomes a nullable NUMBER.
+        concrete = [x for x in raw_type if x != "null"]
+        node["type"] = concrete[0].upper() if concrete else "STRING"
+        if "null" in raw_type:
+            node["nullable"] = True
+    elif isinstance(raw_type, str):
+        node["type"] = raw_type.upper()
+
+    if "properties" in schema:
+        node["properties"] = {k: to_gemini_schema(v) for k, v in schema["properties"].items()}
+    if "items" in schema:
+        node["items"] = to_gemini_schema(schema["items"])
+    if "required" in schema:
+        node["required"] = list(schema["required"])
+    # additionalProperties is not part of the accepted dialect and is dropped.
+    return node
+
+
+GEMINI_RESPONSE_SCHEMA: dict[str, Any] = to_gemini_schema(EXTRACTION_JSON_SCHEMA)

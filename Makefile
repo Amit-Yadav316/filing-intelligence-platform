@@ -54,8 +54,12 @@ serve:  ## Run the API on :8000
 extract:  ## Extract and score every indexed filing against XBRL
 	$(PY) -m scripts.run_extraction
 
-dags:  ## Verify every DAG parses (requires apache-airflow)
-	$(PY) -c "from airflow.models import DagBag; b=DagBag('dags', include_examples=False); assert not b.import_errors, b.import_errors; print(f'{len(b.dags)} DAGs parsed: {sorted(b.dags)}')"
+dags:  ## Verify every DAG parses (installs Airflow in an ISOLATED venv)
+	@# Never into .venv: Airflow's constraints downgrade typing_extensions and
+	@# break pydantic, taking the application down.
+	py -3.11 -m venv .venv-airflow || python3.11 -m venv .venv-airflow
+	.venv-airflow/Scripts/pip install -q apache-airflow==2.10.5 --constraint https://raw.githubusercontent.com/apache/airflow/constraints-2.10.5/constraints-3.11.txt
+	.venv-airflow/Scripts/python -c "from airflow.models import DagBag; b=DagBag('dags', include_examples=False); assert not b.import_errors, b.import_errors; print(f'{len(b.dags)} DAGs parsed: {sorted(b.dags)}')"
 
 up:  ## Start the local stack
 	docker compose -f deploy/docker-compose.yml up -d

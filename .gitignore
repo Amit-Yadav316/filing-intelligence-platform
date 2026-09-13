@@ -71,3 +71,6 @@ docker-compose.override.yml
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Airflow lives in its own venv; its constraints conflict with the app stack.
+.venv-airflow/

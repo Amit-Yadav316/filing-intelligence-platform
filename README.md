@@ -23,18 +23,18 @@ The answer, measured below, drives the architecture. It is not asserted up front
 
 ## The finding
 
-Measured over **22 filings** (12 large-cap companies, 10-K, FY2022-2024), extracting
+Measured over **23 filings** (12 large-cap companies, 10-K, FY2022-2024), extracting
 four financial fields with `openai/gpt-oss-120b` from retrieved chunks, scored
 against the XBRL facts the SEC published in the same filings.
 
 | Field | Exact | Within 0.5% | Scale error | Wrong | Hallucinated | Abstained | Accuracy | **When answered** |
 |---|---|---|---|---|---|---|---|---|
-| `operating_cash_flow` | 20 | 0 | 0 | 0 | 0 | 2 | **90.9%** | **100.0%** |
-| `total_revenue` | 19 | 0 | 0 | 1 | 0 | 2 | **86.4%** | **95.0%** |
-| `net_income` | 17 | 2 | 0 | 1 | 0 | 2 | **86.4%** | **95.0%** |
-| `total_assets` | 18 | 0 | 0 | 2 | 0 | 2 | **81.8%** | **90.0%** |
+| `operating_cash_flow` | 21 | 0 | 0 | 0 | 0 | 2 | **91.3%** | **100.0%** |
+| `net_income` | 18 | 2 | 0 | 1 | 0 | 2 | **87.0%** | **95.2%** |
+| `total_revenue` | 19 | 0 | 0 | 1 | 0 | 3 | **82.6%** | **95.0%** |
+| `total_assets` | 19 | 0 | 0 | 2 | 0 | 2 | **82.6%** | **90.5%** |
 
-**Overall: 76 of 88 scoreable extractions correct (86.4%). Zero hallucinations.
+**Overall: 79 of 92 scoreable extractions correct (85.9%). Zero hallucinations.
 Zero scale errors.**
 
 ### How it got here, which matters more than the number
@@ -47,7 +47,7 @@ LLM call**, and every one was diagnosed before it was attempted:
 | First run | 55.4% | — | — |
 | | 72.6% | Retrieval + prompt | A no-LLM diagnostic showed the figure was **already in context for 67% of abstentions**. Separately, `websearch_to_tsquery` ANDs bare terms, so three of four lexical anchors returned **zero rows** for filers whose wording differed |
 | | 78.4% | Evaluator accepts near-synonymous concepts | For each wrong answer, searched the filer's own XBRL for a tag whose value the model actually reported. **Ten of eleven** matched a concept the tag map already declared for that field |
-| | **86.4%** | Fixed the fiscal-year rule | Two Johnson & Johnson filings resolved to the *same* fiscal year, so each was scored against the other's figures |
+| | **85.9%** | Fixed the fiscal-year rule | Two Johnson & Johnson filings resolved to the *same* fiscal year, so each was scored against the other's figures |
 
 ### The last bug is the most interesting one
 
@@ -77,10 +77,10 @@ model changed.
 
 | Model | Overall | When answered | Hallucinations | Filings |
 |---|---|---|---|---|
-|  (Groq) | **86.4%** | 95% | **0** | 22 |
-|  | 80.3% | 88% | 1 | 19 |
+| `openai/gpt-oss-120b` (Groq) | **85.9%** | 95% | **0** | 23 |
+| `gemini-3.5-flash` | 80.3% | 88% | 1 | 19 |
 
-Six points apart, and the sample sizes differ because Gemini's free tier ran out
+Five points apart, and the sample sizes differ because Gemini's free tier ran out
 at 19 filings - so read this as a signal, not a verdict. What it does settle is
 the question left open earlier: the pipeline improvements were not the model in
 disguise, because both models were measured on the same pipeline.
@@ -94,8 +94,10 @@ disguise, because both models were measured on the same pipeline.
   free tier's 20-requests-per-day cap.
 - **Structured output was not enforced.** Groq's JSON mode guarantees valid JSON,
   not schema conformance, so the schema was described in the prompt.
-- **22 of 23 filings.** One failed on `max_completion_tokens` before producing
-  valid JSON - an output-budget limit, not a model failure.
+- **Two of the 23 filings used a smaller context.** They exceeded the output
+  budget at the standard 6,000-token context and were re-run at 4,800 to fit
+  inside Groq's 8,000 tokens-per-minute ceiling. That costs them coverage, and
+  they are counted anyway rather than dropped for scoring badly.
 - **Single run, temperature 0.** No self-consistency voting, no ensembling.
 - **n = 22.** Small enough that a single filing moves the headline by about a
   point.
@@ -116,14 +118,14 @@ Coverage is flat at 96% from 10 chunks to 18 - the extra six contribute nothing.
 Under Groq's 8,000 tokens-per-minute ceiling a 6,000-token cap holds 93%, and that
 gap is the measured price of the free tier.
 
-With coverage at 93% and accuracy at 86.4%, the two are now close enough that
+With coverage at 93% and accuracy at 85.9%, the two are now close enough that
 further gains need a better model or an enforced schema, not better retrieval.
 
 ### Prose versus tables
 
 | Source | Correct | Total | Accuracy |
 |---|---|---|---|
-| Tables | 76 | 88 | 86.4% |
+| Tables | 79 | 92 | 85.9% |
 
 Every scored figure was attributed to a **table** chunk. With per-statement retrieval
 in place the financial statements crowd narrative text out of the context entirely,
@@ -466,6 +468,6 @@ filing-intelligence-platform/
 │   ├── prometheus/
 │   ├── grafana/
 │   └── helm/
-├── data/sample/                  committed corpus, runs on clone
+├── data/                         local cache and outputs, gitignored
 └── tests/
 ```

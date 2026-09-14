@@ -127,14 +127,24 @@ class ScorecardStore:
     def latest(self, limit: int = 50) -> list[dict[str, Any]]:
         return list(self.db[SCORECARDS].find({}, {"_id": 0}).sort("evaluated_at", -1).limit(limit))
 
-    def accuracy_by_field(self) -> dict[str, float]:
-        """Per-field accuracy across everything stored.
+    def accuracy_by_field(self, model: str | None = None) -> dict[str, float]:
+        """Per-field accuracy for ONE model.
 
-        Aggregated in the database rather than in Python so the API can serve
-        it without loading every scorecard.
+        Defaults to the configured model rather than to everything stored. The
+        unique index deliberately lets several models coexist - so a model swap
+        cannot overwrite another's results - which means an unfiltered aggregate
+        silently averages them together. That is precisely the blend the README
+        warns against, and it produced a "37 filings" figure from a 22-filing
+        corpus before this filter existed.
+
+        Pass ``model=""`` to aggregate across every model, knowingly.
         """
-        pipeline = [
-            {"$unwind": "$scores"},
+        selected = self.settings.llm_model if model is None else model
+        pipeline: list[dict[str, Any]] = []
+        if selected:
+            pipeline.append({"$match": {"model": selected}})
+        pipeline.append({"$unwind": "$scores"})
+        pipeline += [
             {
                 "$match": {
                     "scores.verdict": {
@@ -175,5 +185,12 @@ class ScorecardStore:
             for row in self.db[SCORECARDS].aggregate(pipeline)
         }
 
-    def count(self) -> int:
-        return int(self.db[SCORECARDS].count_documents({}))
+    def count(self, model: str | None = None) -> int:
+        """Scorecards for one model. Same reasoning as accuracy_by_field."""
+        selected = self.settings.llm_model if model is None else model
+        query = {"model": selected} if selected else {}
+        return int(self.db[SCORECARDS].count_documents(query))
+
+    def models(self) -> list[str]:
+        """Every model with stored results, so callers can see the choice."""
+        return sorted(str(m) for m in self.db[SCORECARDS].distinct("model") if m)

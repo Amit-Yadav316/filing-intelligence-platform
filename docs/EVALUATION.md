@@ -73,18 +73,18 @@ What the API actually does when the caller names a company. The candidate set is
 
 ## Extraction accuracy
 
-_Generated 2026-09-13T18:43:31+00:00 - 22 filings, openai/gpt-oss-120b, 14 retrieved chunks per filing, $0.0000 total._
+_Generated 2026-09-14T08:01:19+00:00 - 23 filings, openai/gpt-oss-120b, 14 retrieved chunks per filing, $0.0000 total._
 
 Every figure below is scored against the XBRL fact the SEC published in the same filing. `unresolvable` means no XBRL fact could be resolved to compare against; those cases are excluded from the accuracy denominator and shown separately rather than quietly dropped.
 
 | Field | Exact | Within 0.5% | Scale error | Wrong | Hallucinated | Abstained | **Accuracy** | **When answered** | Unresolvable |
 |---|---|---|---|---|---|---|---|---|---|
-| `total_revenue` | 19 | 0 | 0 | 1 | 0 | 2 | **86.4%** | **95.0%** | 0 |
-| `net_income` | 17 | 2 | 0 | 1 | 0 | 2 | **86.4%** | **95.0%** | 0 |
-| `total_assets` | 18 | 0 | 0 | 2 | 0 | 2 | **81.8%** | **90.0%** | 0 |
-| `operating_cash_flow` | 20 | 0 | 0 | 0 | 0 | 2 | **90.9%** | **100.0%** | 0 |
+| `total_revenue` | 19 | 0 | 0 | 1 | 0 | 3 | **82.6%** | **95.0%** | 0 |
+| `net_income` | 18 | 2 | 0 | 1 | 0 | 2 | **87.0%** | **95.2%** | 0 |
+| `total_assets` | 19 | 0 | 0 | 2 | 0 | 2 | **82.6%** | **90.5%** | 0 |
+| `operating_cash_flow` | 21 | 0 | 0 | 0 | 0 | 2 | **91.3%** | **100.0%** | 0 |
 
-**Overall: 76/88 scoreable field extractions correct (86.4%)** across 22 filings.
+**Overall: 79/92 scoreable field extractions correct (85.9%)** across 23 filings.
 
 **Accuracy and 'when answered' are two different questions, and the gap between them is the finding.** Overall accuracy counts an abstention as not-correct, because a model that abstains on everything is useless. 'When answered' excludes abstentions and asks the different question: when this model does commit to a figure, how often is it right? A large gap means the model is precise but under-served by retrieval - the fix is the context, not the model. A small gap with low accuracy would mean the opposite.
 
@@ -94,7 +94,7 @@ Attributed by the chunks the model cited for each field, so this is measured fro
 
 | Source | Correct | Total | Accuracy |
 |---|---|---|---|
-| Table | 76 | 88 | 86.4% |
+| Table | 79 | 92 | 85.9% |
 
 ### Failure taxonomy
 

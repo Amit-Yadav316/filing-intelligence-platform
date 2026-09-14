@@ -249,17 +249,21 @@ def get_extraction(accession: str) -> dict[str, Any]:
 @app.get("/accuracy", tags=["extraction"])
 def accuracy() -> dict[str, Any]:
     """Per-field accuracy across everything scored - the README table, live."""
-    with ScorecardStore(_state["settings"]) as store:
+    settings = _state["settings"]
+    with ScorecardStore(settings) as store:
         by_field = store.accuracy_by_field()
         total = store.count()
+        available = store.models()
     return {
+        "model": settings.llm_model,
+        "models_with_results": available,
         "filings_scored": total,
         "accuracy_by_field": {k: round(v, 4) for k, v in by_field.items()},
         "slo": {
             "field": "total_revenue",
-            "floor": _state["settings"].slo_revenue_accuracy_floor,
+            "floor": settings.slo_revenue_accuracy_floor,
             "meeting_slo": by_field.get("total_revenue", 0.0)
-            >= _state["settings"].slo_revenue_accuracy_floor,
+            >= settings.slo_revenue_accuracy_floor,
         },
     }
 

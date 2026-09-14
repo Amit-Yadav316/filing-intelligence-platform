@@ -67,7 +67,7 @@ up:  ## Start the local stack
 down:  ## Stop the local stack
 	docker compose -f deploy/docker-compose.yml down
 
-seed:  ## Load the committed sample corpus
+seed:  ## Land and index a small corpus from EDGAR (needs network)
 	$(PY) -m scripts.seed_sample
 
 demo:  ## One search, one extraction, one scored evaluation

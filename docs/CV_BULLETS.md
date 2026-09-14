@@ -20,8 +20,8 @@ Every number is measured and reproducible from this repository. Commands in the 
   that ingests SEC EDGAR filings, indexes 8,280 text chunks for hybrid BM25 + vector retrieval,
   and extracts financial facts with an LLM.
 - Made the output **verifiable**: every extracted figure is scored against the XBRL ground truth
-  the SEC publishes in the same filing, giving **86.4% field-level accuracy with zero
-  hallucinations** across 88 extractions — and improved it from 55.4% in four diagnosed steps,
+  the SEC publishes in the same filing, giving **85.9% field-level accuracy with zero
+  hallucinations** across 92 extractions — and improved it from 55.4% in four diagnosed steps,
   **three of which cost no API calls**.
 - Ran it like a production service: **3 SLOs with error budgets**, **burn-rate alerting** in
   Prometheus/AlertManager, a **provisioned Grafana dashboard** (version-controlled, not
@@ -97,7 +97,7 @@ Every number is measured and reproducible from this repository. Commands in the 
 - Built a **zero-API-cost context-coverage metric** ("was the answer even in the context?")
   separating retrieval failures from model failures, which made tuning viable against a free tier
   capped at **20 requests/day**.
-- **Benchmarked two models on identical retrieval and prompts**: `gpt-oss-120b` 86.4% vs
+- **Benchmarked two models on identical retrieval and prompts**: `gpt-oss-120b` 85.9% vs
   `gemini-3.5-flash` 80.3%, with 0 hallucinations vs 1.
 - Wrote a **provider-agnostic LLM client** (Gemini + any OpenAI-compatible provider: Groq,
   OpenRouter, Cerebras) with one canonical JSON Schema and a converter to Gemini's dialect so the
@@ -127,9 +127,9 @@ Each found by measurement, not by reading code:
 
 The accuracy figure is credible because of what it refuses to claim:
 
-- **Don't quote 86.4% without n.** 22 filings, 88 extractions; one filing moves it ~1 point.
+- **Don't quote 85.9% without n.** 23 filings, 92 extractions; one filing moves it ~1 point.
 - **Qualify the orchestration.** The ingest DAG has run end to end against a live scheduler;
   the other two are parse-validated and wired but have not run a full pass.
 - **Don't imply schema enforcement.** The final run used JSON mode with the schema described in
   the prompt, not enforced by the provider.
-- **The model comparison is n=19 vs n=22**, not a like-for-like sample size.
+- **The model comparison is n=19 vs n=23**, not a like-for-like sample size.

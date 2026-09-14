@@ -93,7 +93,6 @@ def main() -> int:
         )
 
         per_field: dict[str, Counter[str]] = {f: Counter() for f in SCORED_FIELDS}
-        worst: list[tuple[str, str, str]] = []
 
         print(f"{'Company':<24}{'FY':<7}{'covered':<10}missing")
         print("-" * 78)
@@ -120,7 +119,6 @@ def main() -> int:
                 else:
                     per_field[field]["missing"] += 1
                     missing.append(field)
-                    worst.append(((company or "?")[:20], field, str(fact.value)))
             print(
                 f"{(company or '?')[:22]:<24}{fiscal_year:<7}{covered}/4       "
                 f"{', '.join(missing) if missing else '-'}"

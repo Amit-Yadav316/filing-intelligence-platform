@@ -70,6 +70,21 @@ Four wrong and eight abstentions across 88 scored extractions. The wrong answers
 are concentrated in `total_assets`, including one real misread where `Liabilities`
 was reported as assets.
 
+### Model comparison, on identical retrieval
+
+The controlled experiment: same retrieval, same prompt, same evaluator, only the
+model changed.
+
+| Model | Overall | When answered | Hallucinations | Filings |
+|---|---|---|---|---|
+|  (Groq) | **86.4%** | 95% | **0** | 22 |
+|  | 80.3% | 88% | 1 | 19 |
+
+Six points apart, and the sample sizes differ because Gemini's free tier ran out
+at 19 filings - so read this as a signal, not a verdict. What it does settle is
+the question left open earlier: the pipeline improvements were not the model in
+disguise, because both models were measured on the same pipeline.
+
 ### Honest limits on this table
 
 - **The model's contribution is not isolated.** Provider, retrieval and prompt all
@@ -398,8 +413,6 @@ near-synonymous concepts accepted, and the 52/53-week fiscal-year rule corrected
 
 **Still open:**
 
-- **Isolate the model's contribution.** The controlled Gemini re-run is written and
-  ready; it needs a day's quota or about $0.10 of billing.
 - **`total_assets` at 81.8%**, the weakest field, including one genuine misread.
 - **Scale the orchestrated path.** The DAGs now run against a live scheduler
   (), but only the ingest DAG has executed

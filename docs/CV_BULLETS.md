@@ -32,7 +32,7 @@ where it reads as substantiation rather than as the claim.
   **error-budget burn rate** and an Airflow **quality gate** that withholds publication
   below the accuracy floor. **The accuracy SLO alert fires on the real measured number**,
   and an **inhibition rule suppresses it when the upstream index-staleness alert is
-  active**, so one incident pages once. **214 tests, `mypy --strict` clean, 3-job CI.**
+  active**, so one incident pages once. **221 tests, `mypy --strict` clean, 3-job CI.**
 
 ---
 
@@ -79,6 +79,11 @@ where it reads as substantiation rather than as the claim.
   and remediation.
 - **Structured JSON logging** with a correlation ID threaded from API request through retrieval
   and LLM call, so one request's journey is a single `grep`.
+- **Found and fixed a bug in my own monitoring**: a batch job pushed the shared metric registry,
+  publishing `index_freshness_seconds = 0` it had never measured — which silently cleared a live
+  `IndexStale` alert on an index 663 days behind. Scoped the push to a per-job registry, then added
+  **`absent()` alerts** because the fix revealed a dead exporter *deletes* a threshold alert rather
+  than firing it.
 
 **Data engineering**
 
@@ -172,6 +177,8 @@ Each found by measurement, not by reading code:
 | `filings.recent` is capped, so a naive check flags the **biggest** filers | Reading API behaviour, not API docs |
 | EDGAR returns **403, not 404**, for a holiday — would have broken every backfill | Found by running it, not by reading it |
 | The inhibition rule **demonstrably suppressed** a real page, not just configured to | Alerting verified by running it, not by writing YAML |
+| My own monitoring **lied**: a batch push published `index_freshness=0` it had never measured, silently clearing a live alert on a 663-day-stale index | Instrumentation is code and fails like code; found it, fixed it, wrote the regression test |
+| Fixing that revealed **`absent()` alerting was missing** — a dead exporter deleted the alert instead of firing it | An SLO can be met, breached, or *unmeasured*, and only absence rules tell the last one apart |
 
 ---
 

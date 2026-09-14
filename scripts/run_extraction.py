@@ -33,7 +33,11 @@ from src.extract.extraction_service import ExtractionService
 from src.extract.schemas import SCORED_FIELDS
 from src.ingest.edgar_client import EdgarClient
 from src.observability.logging import configure_logging, get_logger
-from src.observability.metrics import EXTRACTION_ACCURACY, GROUND_TRUTH_RESOLUTION
+from src.observability.metrics import (
+    EXTRACTION_ACCURACY,
+    GROUND_TRUTH_RESOLUTION,
+    extraction_eval_registry,
+)
 from src.observability.push import push_metrics
 from src.retrieve.hybrid import HybridRetriever
 from src.retrieve.indexes import BM25Index, VectorIndex
@@ -370,7 +374,21 @@ def main() -> int:
     # A batch job exits before any scrape reaches it, so the accuracy gauges are
     # pushed rather than pulled. Without this the SLO alert has nothing to
     # evaluate and the dashboard is blank exactly when a run has just finished.
-    push_metrics("extraction_eval", settings=settings, grouping={"model": settings.llm_model})
+    #
+    # The push uses a registry containing ONLY these two gauges. Pushing the
+    # shared one would also publish index_freshness_seconds at its untouched
+    # default of 0, which Prometheus cannot tell from a real reading - and that
+    # 0 once cleared a live IndexStale alert on a 663-day-stale index.
+    push_registry, push_accuracy, push_resolution = extraction_eval_registry()
+    for name, a in agg.items():
+        push_accuracy.labels(field=name).set(a.accuracy)
+        push_resolution.labels(field=name).set(a.resolvable_rate)
+    push_metrics(
+        "extraction_eval",
+        push_registry,
+        settings=settings,
+        grouping={"model": settings.llm_model},
+    )
 
     meta = {
         "filings": len(cards),

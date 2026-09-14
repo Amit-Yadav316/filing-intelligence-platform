@@ -71,19 +71,16 @@ TASK_FAILURES = Counter(
 )
 
 # --- Quality --------------------------------------------------------------
-EXTRACTION_ACCURACY = Gauge(
-    f"{_NS}_extraction_accuracy_ratio",
-    "Share of extractions matching XBRL ground truth within tolerance.",
-    ["field"],
-    registry=REGISTRY,
-)
+# Declared once and reused by the batch registry below, so the series a DAG run
+# pushes and the series the API exposes can never drift apart.
+_ACCURACY_NAME = f"{_NS}_extraction_accuracy_ratio"
+_ACCURACY_DOC = "Share of extractions matching XBRL ground truth within tolerance."
+_RESOLUTION_NAME = f"{_NS}_ground_truth_resolution_ratio"
+_RESOLUTION_DOC = "Share of filings for which an XBRL fact could be resolved for this field."
 
-GROUND_TRUTH_RESOLUTION = Gauge(
-    f"{_NS}_ground_truth_resolution_ratio",
-    "Share of filings for which an XBRL fact could be resolved for this field.",
-    ["field"],
-    registry=REGISTRY,
-)
+EXTRACTION_ACCURACY = Gauge(_ACCURACY_NAME, _ACCURACY_DOC, ["field"], registry=REGISTRY)
+
+GROUND_TRUTH_RESOLUTION = Gauge(_RESOLUTION_NAME, _RESOLUTION_DOC, ["field"], registry=REGISTRY)
 
 INDEX_FRESHNESS = Gauge(
     f"{_NS}_index_freshness_seconds",
@@ -121,3 +118,25 @@ EMBEDDING_CACHE = Counter(
     ["outcome"],
     registry=REGISTRY,
 )
+
+
+def extraction_eval_registry() -> tuple[CollectorRegistry, Gauge, Gauge]:
+    """A registry holding ONLY the two gauges the extraction batch job sets.
+
+    Pushing the module-level ``REGISTRY`` instead would publish every metric it
+    owns, including the ones this job never touches - and an untouched Gauge
+    reads 0, which is not "no data" but a confident measurement of zero.
+
+    That is not hypothetical. An earlier version pushed the whole registry, so
+    ``index_freshness_seconds`` went out as 0 under the batch job's labels. While
+    the API was up its true value (663 days) also existed and ``IndexStale``
+    fired correctly. When the API went down the pushed 0 was the only series
+    left, and the alert silently cleared - the monitoring reported a
+    663-day-stale index as perfectly fresh.
+
+    A batch job must publish what it measured and nothing else.
+    """
+    registry = CollectorRegistry()
+    accuracy = Gauge(_ACCURACY_NAME, _ACCURACY_DOC, ["field"], registry=registry)
+    resolution = Gauge(_RESOLUTION_NAME, _RESOLUTION_DOC, ["field"], registry=registry)
+    return registry, accuracy, resolution

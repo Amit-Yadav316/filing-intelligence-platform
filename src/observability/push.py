@@ -10,6 +10,13 @@ job plus instance, and ``push_to_gateway`` REPLACES everything in that group.
 Pushing per-field accuracy under one group is therefore correct - a field that
 stops being scored disappears rather than going stale - but pushing two
 different jobs under one key would have each silently delete the other's series.
+
+The registry is a required argument on purpose. ``push_to_gateway`` publishes
+everything in whatever registry it is handed, and an untouched Gauge reads 0 -
+indistinguishable, once it reaches Prometheus, from a real measurement of zero.
+Handing it a shared process-wide registry therefore asserts that every metric in
+the process is a finding of this job. Callers build a registry holding only what
+they measured; see ``metrics.extraction_eval_registry``.
 """
 
 from __future__ import annotations
@@ -18,17 +25,16 @@ from typing import Any
 
 from src.config.settings import Settings, get_settings
 from src.observability.logging import get_logger
-from src.observability.metrics import REGISTRY
 
 log = get_logger(__name__)
 
 
 def push_metrics(
     job: str,
+    registry: Any,
     *,
     settings: Settings | None = None,
     grouping: dict[str, str] | None = None,
-    registry: Any = None,
 ) -> bool:
     """Push the collected metrics. Returns whether it succeeded.
 
@@ -47,7 +53,7 @@ def push_metrics(
         push_to_gateway(
             gateway.replace("http://", "").replace("https://", ""),
             job=job,
-            registry=registry if registry is not None else REGISTRY,
+            registry=registry,
             grouping_key=grouping or {},
             timeout=10,
         )

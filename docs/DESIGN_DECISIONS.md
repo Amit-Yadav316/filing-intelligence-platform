@@ -183,6 +183,39 @@ budget before month end but is not an emergency, so it files a ticket.
 and teaches people to ignore the alert. Burn-rate alerting fires on *sustained*
 damage to the thing the user actually experiences.
 
+### Why a batch job pushes its own registry, not the shared one
+
+`push_to_gateway` publishes everything in the registry it is given. Handing it a
+process-wide registry therefore asserts that every metric in the process is a
+finding of this job - and an untouched Gauge reads 0, which Prometheus cannot
+distinguish from a real measurement of zero.
+
+Measured consequence, not a hypothetical: pushing the shared registry published
+`index_freshness_seconds = 0`. It stayed hidden while the API was up, because the
+API's own exporter carried the true 663-day value and `IndexStale` fired on that.
+When the API died, the pushed `0` was all that remained and the alert silently
+cleared on a 663-day-stale index.
+
+So `push_metrics` takes the registry as a required argument. A default would
+have made the unsafe call the easy one, and the unsafe call is the one that
+makes monitoring lie.
+
+### Why there are `absent()` alerts as well as threshold alerts
+
+A threshold rule compares a number to a bound. An absent series is not a number,
+so it breaches nothing - which means a dead exporter does not trigger the alert,
+it *deletes* it. Staleness alerting that depends on the stale component still
+reporting is not alerting.
+
+`IndexFreshnessUnreported` and `ExtractionAccuracyUnreported` fire on absence.
+They are deliberately different severities: freshness is scraped continuously so
+absence means something broke and pages; accuracy arrives by push from a periodic
+DAG, so it needs a 6h window and files a ticket.
+
+**The distinction worth stating:** an SLO can be met, breached, or *unmeasured*.
+The third is not a special case of the first, and only an absence rule can tell
+them apart.
+
 ### Why the inhibition rule exists
 
 If the index is stale, extraction accuracy will also degrade — it is scoring
@@ -286,3 +319,6 @@ Stated plainly, because being able to criticise your own design is the point.
   they are not strictly comparable to the other 21.
 - **Only the ingest DAG has run a full pass.** The other two are parse-validated
   and wired.
+- **The observability stack shipped with a bug that made it lie**, and an
+  unrelated OOM kill is what exposed it. Instrumentation deserves the same
+  scepticism as the code it measures; mine did not get it until it failed.

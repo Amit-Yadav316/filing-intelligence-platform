@@ -48,6 +48,22 @@ groups:
             like an answer. Inspect recent scorecards for the hallucinated
             verdict and check whether retrieval is returning the wrong filing.
 
+      - alert: ExtractionAccuracyUnreported
+        # Same failure mode on the accuracy SLO. This series arrives by push, so
+        # it also disappears if the extraction DAG stops running entirely -
+        # which is exactly when you most want to be told.
+        expr: absent(filing_intel_extraction_accuracy_ratio)
+        for: 6h
+        labels:
+          severity: ticket
+          slo: extraction_accuracy
+        annotations:
+          summary: "No extraction run has reported accuracy in 6h"
+          description: >-
+            Either the extract_and_evaluate DAG has not run or its push to the
+            Pushgateway is failing. The accuracy SLO is currently unmeasured.
+            Runbook: docs/RUNBOOK.md#llm-provider-returning-429
+
   - name: slo_index_freshness
     interval: 30s
     rules:
@@ -74,6 +90,29 @@ groups:
           slo: index_freshness
         annotations:
           summary: "Index freshness at {{ $value | humanizeDuration }}, 83% of budget spent"
+
+      - alert: IndexFreshnessUnreported
+        # Both rules above compare a number to a threshold, and an ABSENT series
+        # satisfies neither - so a dead exporter silences the entire freshness
+        # SLO rather than breaching it. Staleness alerting that depends on the
+        # stale thing still reporting is not alerting.
+        #
+        # Found the hard way: a batch job pushed this series at its untouched
+        # default of 0, which masked the true value; when the API then died, the
+        # 0 vanished too and IndexStale went from firing to inactive on an index
+        # 663 days behind. Nothing was fixed. Nothing alerted either.
+        expr: absent(filing_intel_index_freshness_seconds)
+        for: 15m
+        labels:
+          severity: page
+          slo: index_freshness
+        annotations:
+          summary: "No exporter is reporting index freshness"
+          description: >-
+            The freshness SLO is unmeasurable, not met. Check that the API is up
+            and that its /metrics endpoint is being scraped - a silent SLO is
+            worse than a breached one, because a breach is at least visible.
+            Runbook: docs/RUNBOOK.md#edgar-rate-limited
 
   - name: slo_search_latency
     interval: 30s

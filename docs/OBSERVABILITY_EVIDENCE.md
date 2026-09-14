@@ -108,12 +108,66 @@ suppress accuracy alerts belonging to unrelated deployments.
 One incident, one page. That is the whole argument for inhibition rules over
 threshold alerts, demonstrated rather than described.
 
+## 4. The incident this capture caused
+
+Writing the section above is what exposed the bug. It is the most useful thing in
+this document, so it is kept rather than quietly fixed.
+
+**What happened.** The extraction job pushed the shared module-level registry to
+the Pushgateway. `push_to_gateway` publishes *everything* in the registry it is
+handed, so the push also published every metric the job never touched, at its
+default value - including:
+
+```
+filing_intel_index_freshness_seconds{job="extraction_eval"} 0
+filing_intel_edgar_circuit_state{job="extraction_eval"}     0
+```
+
+An untouched Gauge reads 0. Once that reaches Prometheus, 0 is not "no data" -
+it is a confident measurement of zero. The pipeline was asserting that the index
+was perfectly fresh and the EDGAR circuit was healthy, having measured neither.
+
+**Why it stayed hidden.** While the API was up, its own exporter published the
+true value, so two series existed and `IndexStale` fired correctly on the real
+one. The bug was invisible precisely because the system was working.
+
+**How it surfaced.** The API process was killed by the OS for memory. The true
+series went stale and disappeared, leaving the pushed `0` as the only one. The
+alert went from `firing` to `inactive` - on an index 663 days behind EDGAR.
+Nothing was fixed, and nothing alerted. A monitoring system had quietly started
+lying, and the trigger was an unrelated process dying.
+
+**The fix.** `metrics.extraction_eval_registry()` returns a registry holding only
+the two gauges the batch job sets, and `push_metrics` now takes the registry as a
+**required** argument - there is no default to fall back into. Verified against
+the live gateway: the group now contains the two intended series and nothing else.
+
+**The second bug, which the fix revealed.** With the false `0` gone, a dead
+exporter means the series is *absent* - and `absent` satisfies no threshold, so
+`IndexStale` could never fire again no matter how stale the index became. The
+staleness alert depended on the stale thing still reporting.
+
+Two `absent()` rules now close that, and they discriminate correctly - with the
+API down and a fresh accuracy push in place:
+
+```
+IndexFreshnessUnreported       pending    <- nothing is reporting freshness (true)
+ExtractionAccuracyUnreported   inactive   <- accuracy IS being reported (true)
+```
+
+**What it is worth saying about this.** The alert that was supposed to catch a
+stale index was itself silenced by a monitoring bug, and only a memory-pressure
+kill made it visible. Instrumentation is code, it fails like code, and "the
+dashboard is green" and "the system is healthy" are different claims.
+
 ## What this does not prove
 
 - Nobody was paged. The receivers are configured and the routing tree resolves
   by severity, but no webhook, PagerDuty key or SMTP server is attached.
-- `IndexFreshnessBudgetBurningFast` was still `pending` at capture time. It uses
-  a 6h window and the stack had not been up that long.
+- `IndexFreshnessBudgetBurningFast` was `pending` at capture time, and later went
+  `inactive` - not because it was resolved, but because of the bug in section 4.
+- `IndexFreshnessUnreported` was `pending`, not yet `firing`, when this was
+  written; it holds `for: 15m`.
 - The `ShortCircuitOperator` quality gate is unit-tested at its boundary
   conditions, but `extract_and_evaluate` has not run a full pass in a live
   scheduler. The gate logic is proven; the DAG around it is parse-validated.

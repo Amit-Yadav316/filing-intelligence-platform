@@ -14,20 +14,26 @@ Every number is measured and reproducible from this repository. Commands in the 
 
 ## Short form (3 bullets, for a CV)
 
-- Built and containerised an **8-service data platform with Docker Compose** — **Apache Airflow**
-  orchestration, **MinIO** S3-compatible object storage, **PostgreSQL 16 + pgvector**, **Redis**,
-  **MongoDB**, **FastAPI**, and a **Prometheus / Grafana / AlertManager** observability stack —
-  that ingests SEC EDGAR filings, indexes 8,280 text chunks for hybrid BM25 + vector retrieval,
-  and extracts financial facts with an LLM.
-- Made the output **verifiable**: every extracted figure is scored against the XBRL ground truth
-  the SEC publishes in the same filing, giving **85.9% field-level accuracy with zero
-  hallucinations** across 92 extractions — and improved it from 55.4% in four diagnosed steps,
-  **three of which cost no API calls**.
-- Ran it like a production service: **3 SLOs with error budgets**, **burn-rate alerting** in
-  Prometheus/AlertManager, a **provisioned Grafana dashboard** (version-controlled, not
-  hand-clicked), an Airflow **quality gate** that blocks publishing when accuracy drops, and a
-  **runbook** covering three failure modes that genuinely occurred. **207 tests, `mypy --strict`
-  clean, 3-job CI pipeline.**
+Ordered so the first six seconds land on the thing nobody else has. The stack
+list is real but it is the most common shape on a graduate CV — it goes last,
+where it reads as substantiation rather than as the claim.
+
+- Made LLM extraction **verifiable**, which most systems cannot: every extracted
+  figure is scored against the XBRL ground truth the SEC publishes in the *same*
+  filing, giving **85.9% field-level accuracy with zero hallucinations** across 92
+  extractions, broken out by a six-way failure taxonomy rather than a single number.
+- **Raised accuracy from 55.4% to 85.9% in four diagnosed steps — three verified
+  without spending a single API call** — by building a context-coverage metric that
+  separates retrieval failures from model failures; one step was fixing a
+  **ground-truth bug that had been marking a correct model wrong**.
+- Built the platform behind it: **8 containerised services** — **Apache Airflow**
+  orchestration, **MinIO** object storage, **PostgreSQL 16 + pgvector**, **Redis**,
+  **MongoDB**, **FastAPI**, **Prometheus / Grafana / AlertManager** — with 3 SLOs on
+  **error-budget burn rate**, an Airflow **quality gate** that withholds publication
+  below the accuracy floor, and a runbook for three failure modes that occurred.
+  **207 tests, `mypy --strict` clean, 3-job CI.**
+
+---
 
 ---
 
@@ -104,6 +110,43 @@ Every number is measured and reproducible from this repository. Commands in the 
   two cannot drift.
 - Served it through **FastAPI** with full provenance in every response — chunk ID, Item, character
   offsets, EDGAR URL — at **150 ms p95** against an 800 ms SLO.
+
+---
+
+## Before the interview: three claims to be able to whiteboard
+
+The risk with a project built fast is being unable to defend a choice you did not
+personally agonise over. These three are the most likely to be probed, because
+they read as the most senior. Full reasoning for all of them is in
+[`DESIGN_DECISIONS.md`](DESIGN_DECISIONS.md).
+
+**1. "Why 14.4× burn rate?"**
+Error budget for `/search` is 5% (SLO: p95 < 800 ms). Burn rate 14.4 means the
+error rate is 14.4 × 5% = 72%, so the alert fires when fewer than 28% of requests
+are under 800 ms. The number is chosen so one hour of that burn consumes 2% of a
+30-day budget — 1/720 × 14.4 = 2%. Fast enough to page, slow enough that a blip
+does not. The 6× / 6h variant consumes 5% and files a ticket instead.
+
+**2. "Why does the quality gate skip instead of fail?"**
+A model below the accuracy floor is not a broken pipeline — the DAG noticed and
+refused to publish, which is it working. Failing would page someone for a
+regression already contained. Skipping keeps the previous good extractions,
+still records the accuracy metric, and lets the alert fire on the metric rather
+than on a red task. Failure should mean broken; this is not broken.
+
+**3. "Isn't accepting alternative XBRL tags just gaming your own benchmark?"**
+Only concepts the tag map **already declared for that field** are accepted, and
+that map predates the failures. "Net income" is genuinely both `NetIncomeLoss`
+(attributable to parent) and `ProfitLoss` (including non-controlling interests).
+The same diagnostic found UnitedHealth's `total_assets` answer coincidentally
+equalling its `Liabilities` — still scored wrong. Accepting a declared synonym
+fixes the answer key; accepting anything that matches would fit the metric to
+the results.
+
+**And the one to volunteer before they find it:** n = 23 filings. Small enough
+to find bugs, too small for confident comparisons. The limit is an LLM free
+tier, not the pipeline — ingest and indexing run the full 55-company universe.
+Saying this first is worth more than having it extracted.
 
 ---
 

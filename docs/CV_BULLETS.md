@@ -29,9 +29,10 @@ where it reads as substantiation rather than as the claim.
 - Built the platform behind it: **8 containerised services** — **Apache Airflow**
   orchestration, **MinIO** object storage, **PostgreSQL 16 + pgvector**, **Redis**,
   **MongoDB**, **FastAPI**, **Prometheus / Grafana / AlertManager** — with 3 SLOs on
-  **error-budget burn rate**, an Airflow **quality gate** that withholds publication
-  below the accuracy floor, and a runbook for three failure modes that occurred.
-  **207 tests, `mypy --strict` clean, 3-job CI.**
+  **error-budget burn rate** and an Airflow **quality gate** that withholds publication
+  below the accuracy floor. **The accuracy SLO alert fires on the real measured number**,
+  and an **inhibition rule suppresses it when the upstream index-staleness alert is
+  active**, so one incident pages once. **214 tests, `mypy --strict` clean, 3-job CI.**
 
 ---
 
@@ -61,11 +62,18 @@ where it reads as substantiation rather than as the claim.
   state — scraped by **Prometheus**, with Airflow's batch tasks pushing via **Pushgateway**.
 - Defined **3 SLOs with explicit error budgets** and wrote **burn-rate alerts** (14.4× fast burn
   pages, 6× slow burn files a ticket) instead of threshold alerts that fire on one slow query.
+- **Verified the alerting end to end on the running stack** rather than shipping untested rules:
+  the batch extraction job pushes accuracy through the **Pushgateway**, Prometheus evaluates the
+  rule, and `ExtractionAccuracyBelowSLO` reaches AlertManager with the figure templated from the
+  live series — *"total_revenue accuracy 82.61%, below the 90% floor"*. No fault was injected;
+  it fires on the project's genuine measured number.
 - Built a **Grafana dashboard as provisioned JSON in version control** — SLO stat panels,
   accuracy by field, latency percentiles, cache hit rate and cost — so it is an artefact of the
   repo, not of someone's browser.
 - **AlertManager** routing splits `page` from `ticket` by severity, with an inhibition rule that
-  suppresses the accuracy alert when the whole index is stale, since that is a downstream symptom.
+  suppresses the accuracy alert when the whole index is stale, since that is a downstream symptom
+  — **observed working**: with both conditions true, the accuracy alert is `firing` in Prometheus
+  and `suppressed` in AlertManager, matched on a shared `platform` label. One incident, one page.
 - Wrote a **runbook** for three failure modes that actually occurred — EDGAR rate-limiting, LLM
   provider quota exhaustion, embedding backlog — each with detection signal, first diagnostic
   and remediation.
@@ -163,6 +171,7 @@ Each found by measurement, not by reading code:
 | A more explicit prompt made accuracy **worse** (62.5% → 18.8%) | Prompt changes need measurement, not intuition |
 | `filings.recent` is capped, so a naive check flags the **biggest** filers | Reading API behaviour, not API docs |
 | EDGAR returns **403, not 404**, for a holiday — would have broken every backfill | Found by running it, not by reading it |
+| The inhibition rule **demonstrably suppressed** a real page, not just configured to | Alerting verified by running it, not by writing YAML |
 
 ---
 
@@ -176,3 +185,9 @@ The accuracy figure is credible because of what it refuses to claim:
 - **Don't imply schema enforcement.** The final run used JSON mode with the schema described in
   the prompt, not enforced by the provider.
 - **The model comparison is n=19 vs n=23**, not a like-for-like sample size.
+- **Don't say you were paged.** The alerts fire and route by severity, and the inhibition rule
+  is observed suppressing one — but no webhook, PagerDuty key or SMTP server is attached, so
+  nothing left AlertManager. Say *"alerts fire and route"*, not *"I got paged"*.
+- **The quality gate is unit-tested at its boundaries, not run in anger.** `extract_and_evaluate`
+  has not completed a live scheduler pass, so describe the gate as implemented and tested rather
+  than as having blocked a real publish.

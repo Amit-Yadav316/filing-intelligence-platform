@@ -33,7 +33,8 @@ from src.extract.extraction_service import ExtractionService
 from src.extract.schemas import SCORED_FIELDS
 from src.ingest.edgar_client import EdgarClient
 from src.observability.logging import configure_logging, get_logger
-from src.observability.metrics import EXTRACTION_ACCURACY
+from src.observability.metrics import EXTRACTION_ACCURACY, GROUND_TRUTH_RESOLUTION
+from src.observability.push import push_metrics
 from src.retrieve.hybrid import HybridRetriever
 from src.retrieve.indexes import BM25Index, VectorIndex
 from src.retrieve.store import ChunkStore, fiscal_year_for
@@ -65,7 +66,7 @@ def load_facts(cik: str, client: EdgarClient) -> dict[str, Any]:
     return facts
 
 
-def annual_filings_only(filings: list[dict]) -> list[dict]:
+def annual_filings_only(filings: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Keep 10-K filings when scoring annual fields.
 
     The four scored fields are annual: full-year revenue, full-year net income,
@@ -364,6 +365,12 @@ def main() -> int:
     agg = ExtractionEvaluator.aggregate(cards)
     for name, a in agg.items():
         EXTRACTION_ACCURACY.labels(field=name).set(a.accuracy)
+        GROUND_TRUTH_RESOLUTION.labels(field=name).set(a.resolvable_rate)
+
+    # A batch job exits before any scrape reaches it, so the accuracy gauges are
+    # pushed rather than pulled. Without this the SLO alert has nothing to
+    # evaluate and the dashboard is blank exactly when a run has just finished.
+    push_metrics("extraction_eval", settings=settings, grouping={"model": settings.llm_model})
 
     meta = {
         "filings": len(cards),

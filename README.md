@@ -240,8 +240,8 @@ exhaust the month's budget early.
 
 | SLO | Target | Measured | Status |
 |---|---|---|---|
-| Extraction accuracy, `total_revenue` | ≥ 90% | **57.1%** (80.0% when answered) | **Not met** |
-| Index freshness behind EDGAR | < 24h | corpus is historical (FY2022-24) | n/a on a fixed corpus |
+| Extraction accuracy, `total_revenue` | ≥ 90% | **82.6%** (95.0% when answered) | **Not met** |
+| Index freshness behind EDGAR | < 24h | **663 days** on the fixed FY2022-24 corpus | **Not met**, and alerting on it |
 | `/search` p95 latency | < 800 ms | **148-170 ms** | **Met**, wide margin |
 
 The accuracy SLO is breached and reported as breached. Lowering the target to
@@ -260,6 +260,35 @@ routing by severity in [`deploy/alertmanager/`](deploy/alertmanager/), and three
 worked failure modes in [`docs/RUNBOOK.md`](docs/RUNBOOK.md) — EDGAR rate-limiting,
 LLM provider 429s, and a growing embedding backlog. All three happened while
 building this.
+
+### The alerts have actually fired
+
+Not a screenshot of a dashboard — a capture of the running stack, in
+[`docs/OBSERVABILITY_EVIDENCE.md`](docs/OBSERVABILITY_EVIDENCE.md). **No fault was
+injected**; both alerts below fired on conditions that are genuinely true of this
+repository:
+
+```
+ExtractionAccuracyBelowSLO   firing   total_revenue accuracy 82.61%, below the 90% floor
+IndexStale                   firing   Index is 663d 0h 0m 0s behind EDGAR
+```
+
+The accuracy figure in that message was rendered by Prometheus from the live
+series, not written by hand — the batch extraction job pushes it through the
+Pushgateway on completion, because a job that exits between scrapes cannot be
+pulled from.
+
+And the inhibition rule did its job. A stale index is the upstream *cause* of
+degraded accuracy, so paging for both is paging twice for one problem.
+AlertManager suppressed the accuracy page, matched on the shared `platform`
+label:
+
+```
+ExtractionAccuracyBelowSLO   state=suppressed   inhibitedBy=[dcc4c9562314b959]
+IndexStale                   state=active       fingerprint=dcc4c9562314b959
+```
+
+Firing in Prometheus, suppressed in AlertManager. One incident, one page.
 
 ## Retrieval
 
@@ -462,6 +491,8 @@ filing-intelligence-platform/
 ├── docs/
 │   ├── RUNBOOK.md
 │   ├── SLOS.md
+│   ├── DESIGN_DECISIONS.md
+│   ├── OBSERVABILITY_EVIDENCE.md
 │   └── EVALUATION.md
 ├── deploy/
 │   ├── docker-compose.yml

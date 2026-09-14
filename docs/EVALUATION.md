@@ -73,7 +73,7 @@ What the API actually does when the caller names a company. The candidate set is
 
 ## Extraction accuracy
 
-_Generated 2026-09-14T08:01:19+00:00 - 23 filings, openai/gpt-oss-120b, 14 retrieved chunks per filing, $0.0000 total._
+_Generated 2026-09-14T08:53:01+00:00 - 23 filings, openai/gpt-oss-120b, 14 retrieved chunks per filing, $0.0000 total._
 
 Every figure below is scored against the XBRL fact the SEC published in the same filing. `unresolvable` means no XBRL fact could be resolved to compare against; those cases are excluded from the accuracy denominator and shown separately rather than quietly dropped.
 
